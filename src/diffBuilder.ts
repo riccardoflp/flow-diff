@@ -3,7 +3,7 @@ import * as vscode from 'vscode';
 import { AlignedDiffModel } from './diff/model';
 import { DiffEngine } from './diffEngine';
 import { GitService } from './git/gitService';
-import { DiffDescriptor } from './panel/diffPanel';
+import { canStage, DiffDescriptor, shortRef } from './panel/diffPanel';
 
 /** Beyond this many total lines, ask before computing. */
 const LARGE_FILE_LINES = 100_000;
@@ -42,7 +42,8 @@ export async function buildModel(
     return undefined;
   }
 
-  const markStaged = descriptor.rightSide === 'worktree' && !descriptor.rightRef;
+  // only meaningful against HEAD: vs another revision, "staged" says nothing
+  const markStaged = canStage(descriptor) && descriptor.rightSide === 'worktree';
   const [oldText, newText, indexText, languageId] = await Promise.all([
     git.getContent(repo, descriptor.fileUri, { ref: descriptor.leftRef }),
     git.getContent(repo, descriptor.fileUri, descriptor.rightRef ? { ref: descriptor.rightRef } : descriptor.rightSide),
@@ -79,13 +80,13 @@ export async function buildModel(
   }
 
   const rightLabel = descriptor.rightRef
-    ? descriptor.rightRef.slice(0, 9)
+    ? shortRef(descriptor.rightRef)
     : descriptor.rightSide === 'worktree' ? 'Working Tree' : 'Index';
   const result = await diffEngine.run({
     input: {
       oldText: left,
       newText: right,
-      leftLabel: descriptor.leftRef,
+      leftLabel: shortRef(descriptor.leftRef),
       rightLabel,
       languageId,
       filePath: vscode.workspace.asRelativePath(descriptor.fileUri),

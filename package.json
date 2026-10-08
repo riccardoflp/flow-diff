@@ -42,6 +42,12 @@
         "category": "Flow Diff"
       },
       {
+        "command": "flowDiff.compareWith",
+        "title": "Compare with Branch or Revision…",
+        "category": "Flow Diff",
+        "icon": "$(git-compare)"
+      },
+      {
         "command": "flowDiff.nextChunk",
         "title": "Next Change",
         "category": "Flow Diff",
@@ -89,6 +95,11 @@
           "command": "flowDiff.openDiffStaged",
           "when": "scmProvider == git",
           "group": "navigation@2"
+        },
+        {
+          "command": "flowDiff.compareWith",
+          "when": "scmProvider == git",
+          "group": "navigation@3"
         }
       ],
       "editor/title": [
@@ -126,6 +137,11 @@
           "command": "flowDiff.unstageFile",
           "when": "activeWebviewPanelId == flowDiff.panel && flowDiff.activeSide == index",
           "group": "navigation@4"
+        },
+        {
+          "command": "flowDiff.compareWith",
+          "when": "activeWebviewPanelId == flowDiff.panel",
+          "group": "1_compare"
         }
       ],
       "commandPalette": [
@@ -152,6 +168,20 @@
         {
           "command": "flowDiff.revertFile",
           "when": "activeWebviewPanelId == flowDiff.panel && flowDiff.activeSide == worktree"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "flowDiff.compareWith",
+          "when": "config.git.enabled && !explorerResourceIsFolder",
+          "group": "3_compare@9"
+        }
+      ],
+      "editor/title/context": [
+        {
+          "command": "flowDiff.compareWith",
+          "when": "config.git.enabled && resourceScheme == file",
+          "group": "3_compare@9"
         }
       ]
     },

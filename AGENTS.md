@@ -34,6 +34,7 @@ src/
 ├── diffEngine.ts           # job di diff su worker_thread (fallback inline)
 ├── worker/diffWorker.ts    # entry del worker: runDiffJob
 ├── chunkActions.ts         # revert (WorkspaceEdit) / stage / unstage per chunk
+├── refPicker.ts            # QuickPick branch/tag/commit per Compare with…
 ├── diff/                   # PURO: niente import vscode, testabile con node --test
 │   ├── model.ts            # AlignedDiffModel: rows (con filler) + chunks
 │   ├── computeDiff.ts      # jsdiff → modello (word-diff con guard 65%, timeout)

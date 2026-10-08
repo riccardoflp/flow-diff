@@ -1,5 +1,21 @@
 # Changelog
 
+## Unreleased
+
+- Compare with any branch, tag or commit (`Flow Diff: Compare with Branch or
+  Revision…`), or a typed revision such as `HEAD~3`. Against a revision other
+  than `HEAD`, chunks offer revert only and are never marked as staged (this
+  also fixes diffs opened from GitLens).
+- Chunk stage/unstage works on partially staged files, keeps the index's line
+  endings and handles files without a final newline.
+- Diffs are computed on a background thread with a time limit; only the
+  panels affected by a change are refreshed, and unchanged inputs skip the
+  diff entirely.
+- Edits made in the diff pane replace only the changed text in the document,
+  keeping undo, cursors and folding of other editors intact.
+- Files in encodings other than UTF-8 are read like the editor reads them, so
+  non-ASCII lines no longer show as changed.
+
 ## 0.1.0 — 2026-06-12
 
 First public release.

@@ -13,6 +13,8 @@ export interface DiffSettings {
   editorOptions: Record<string, unknown>;
   /** Drives which chunk actions the webview offers (revert/stage vs unstage vs none). */
   rightSide: 'worktree' | 'index' | 'ref';
+  /** False when the left side is not HEAD: the worktree pane only offers revert. */
+  canStage: boolean;
 }
 
 /** The user's active color theme, resolved host-side and loadable by shiki. */

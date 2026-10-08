@@ -110,13 +110,19 @@ Prima delle nuove feature: problemi trovati in review, tutti lato host.
       BOM senza `files.autoGuessEncoding` → resta "looks binary"
 - [x] Mappa di `scrollSync` estratta in `diff/scrollMap.ts` (pura) e testata
 
-## 🔲 Fase 3 — Compare with branch / revision
+## ✅ Fase 3 — Compare with branch / revision (fatto)
 
-QuickPick su `repo.state.refs` + `repo.log()` → pipeline esistente con
-`(ref, worktree)`. `gitService.getContent` è già parametrizzato per ref e la
-chiave del registry include già i ref. Nascondere stage/revert quando il lato
-destro non è il worktree (flag già in `init.settings`). Prima delle altre
-perché l'infrastruttura c'è già quasi tutta.
+- [x] `flowDiff.compareWith` + `refPicker.ts`: QuickPick con branch, remote,
+      tag (`getRefs` per committerdate) e i 50 commit che toccano il file
+      (`repo.log({path})`), più la revisione digitata (validata con
+      `getCommit`). Apre `(ref, worktree)` con la pipeline esistente
+- [x] Entry point: palette, context menu Explorer / SCM / tab editor, menu `…`
+      del pannello Flow Diff (usa il file del pannello)
+- [x] Contro un ref ≠ HEAD (anche dal takeover GitLens): niente marcatura
+      staged né stage/unstage, solo revert del chunk; context
+      `flowDiff.activeSide = worktreeVsRef` nasconde Stage/Discard file
+- [x] Label: hash abbreviati a 8, nomi di branch/tag interi
+- [ ] Verifica in F5 (QuickPick e menu non sono coperti dai test)
 
 ## 🔲 Fase 4 — Navigazione e lettura
 

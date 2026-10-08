@@ -7,7 +7,7 @@ import { refreshPanel } from './diffBuilder';
 import { Repository } from './git/api';
 import { applyPatchToIndex, removeFromIndex } from './git/gitCli';
 import { GitService } from './git/gitService';
-import { DiffPanel } from './panel/diffPanel';
+import { canStage, DiffPanel } from './panel/diffPanel';
 
 export type ChunkActionKind = 'revertChunk' | 'stageChunk' | 'unstageChunk';
 
@@ -20,6 +20,9 @@ export class ChunkActions {
     const chunk = model?.chunks.find((c) => c.id === chunkId);
     if (!model || !chunk) {
       return;
+    }
+    if (action !== 'revertChunk' && !canStage(panel.descriptor)) {
+      return; // the webview never offers these against a non-HEAD revision
     }
     try {
       switch (action) {

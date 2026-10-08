@@ -4,6 +4,7 @@ import { buildModel, refreshPanel } from './diffBuilder';
 import { GitService } from './git/gitService';
 import { DiffDescriptor } from './panel/diffPanel';
 import { PanelRegistry } from './panel/panelRegistry';
+import { pickRef } from './refPicker';
 
 export function registerCommands(
   context: vscode.ExtensionContext,
@@ -38,6 +39,9 @@ export function registerCommands(
     ),
     vscode.commands.registerCommand('flowDiff.revertFile', () =>
       fileAction(git, registry, 'discard')
+    ),
+    vscode.commands.registerCommand('flowDiff.compareWith', (resource?: unknown) =>
+      compareWith(git, registry, resource)
     ),
     vscode.commands.registerCommand(
       'flowDiff.openDiffRefs',
@@ -125,6 +129,25 @@ async function openDiff(
   const panel = registry.getOrCreate(descriptor);
   panel.setModel(built.model, built.inputKey);
   panel.reveal();
+}
+
+/** Picks a branch/tag/commit and diffs the file at that revision against the worktree. */
+async function compareWith(git: GitService, registry: PanelRegistry, resource: unknown): Promise<void> {
+  // from inside a Flow Diff panel there is no text editor: use the panel's file
+  const uri = resolveUri(resource) ?? registry.getActive()?.descriptor.fileUri;
+  if (!uri) {
+    void vscode.window.showWarningMessage('Flow Diff: no file selected.');
+    return;
+  }
+  const repo = await git.getRepository(uri);
+  if (!repo) {
+    void vscode.window.showWarningMessage('Flow Diff: file is not part of a git repository.');
+    return;
+  }
+  const ref = await pickRef(repo, uri);
+  if (ref) {
+    await openDiffAtRefs(git, registry, { fileUri: uri, leftRef: ref });
+  }
 }
 
 /**

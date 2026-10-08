@@ -17,6 +17,11 @@ export interface DiffDescriptor {
   rightRef?: string;
 }
 
+/** Index stage/unstage only make sense against HEAD. */
+export function canStage(d: DiffDescriptor): boolean {
+  return !d.rightRef && d.leftRef === 'HEAD';
+}
+
 export function diffKey(d: DiffDescriptor): string {
   return [d.repoRoot, d.fileUri.toString(), d.leftRef, d.rightRef ?? d.rightSide].join('|');
 }
@@ -45,9 +50,9 @@ export class DiffPanel {
   ) {
     const fileName = path.basename(descriptor.fileUri.fsPath);
     const rightLabel = descriptor.rightRef
-      ? abbrevRef(descriptor.rightRef)
+      ? shortRef(descriptor.rightRef)
       : descriptor.rightSide === 'worktree' ? 'Working Tree' : 'Index';
-    const leftLabel = descriptor.rightRef ? abbrevRef(descriptor.leftRef) : descriptor.leftRef;
+    const leftLabel = shortRef(descriptor.leftRef);
     this.panel = vscode.window.createWebviewPanel(
       DiffPanel.viewType,
       `${fileName} (${leftLabel} ↔ ${rightLabel})`,
@@ -98,12 +103,17 @@ export class DiffPanel {
     return this.modelInputKey;
   }
 
+  /**
+   * Drives the editor/title when-clauses: 'worktree' (vs HEAD: stage and
+   * discard), 'worktreeVsRef' (vs another revision: no git file actions),
+   * 'index' (unstage) or 'ref' (read-only).
+   */
   private setSideContext(): void {
-    void vscode.commands.executeCommand(
-      'setContext',
-      'flowDiff.activeSide',
-      this.descriptor.rightRef ? 'ref' : this.descriptor.rightSide
-    );
+    const { leftRef, rightRef, rightSide } = this.descriptor;
+    const side = rightRef
+      ? 'ref'
+      : rightSide === 'worktree' && leftRef !== 'HEAD' ? 'worktreeVsRef' : rightSide;
+    void vscode.commands.executeCommand('setContext', 'flowDiff.activeSide', side);
   }
 
   reveal(): void {
@@ -166,6 +176,7 @@ export class DiffPanel {
       settings: {
         editorOptions: this.readEditorOptions(),
         rightSide: this.descriptor.rightRef ? 'ref' : this.descriptor.rightSide,
+        canStage: canStage(this.descriptor),
       },
       syntaxTheme: await this.themes.resolveActive(),
     });
@@ -273,6 +284,7 @@ function makeNonce(): string {
   return Array.from({ length: 32 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
 }
 
-function abbrevRef(ref: string): string {
-  return ref.length > 9 ? ref.slice(0, 9) : ref;
+/** Commit hashes shortened for labels; branch and tag names kept whole. */
+export function shortRef(ref: string): string {
+  return /^[0-9a-f]{12,}$/i.test(ref) ? ref.slice(0, 8) : ref;
 }

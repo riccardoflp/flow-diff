@@ -8,6 +8,8 @@ word-level intra-line highlights and chunk navigation.
 
 - **Side-by-side diff** of a file against `HEAD` (working tree or index),
   rendered in a custom webview that follows your VS Code theme.
+- **Compare with any branch, tag or commit**: pick from a list (including the
+  commits that touched the file) or type any revision, like `HEAD~3`.
 - **Aligned panes**: changed blocks stay vertically aligned via hatched filler
   lines, exactly like WebStorm's diff viewer.
 - **Center-gutter connectors**: colored bands link each changed block on the
@@ -24,7 +26,9 @@ word-level intra-line highlights and chunk navigation.
   minimap.
 - **Per-chunk actions** in the center gutter: revert (⟲) and stage (+) for
   working-tree diffs, unstage (−) for index diffs — hunk-level staging via
-  `git apply --cached`. Already-staged chunks render dimmed.
+  `git apply --cached`, also on partially staged files. Already-staged chunks
+  render dimmed. Against another revision, revert restores that revision's
+  lines.
 - **File actions** in the panel title bar, like the built-in diff editor:
   Open File, previous/next change, Stage File, Unstage File, Discard Changes.
 - **Editable diff**: both panes are Monaco editors — the working-tree side is
@@ -33,7 +37,8 @@ word-level intra-line highlights and chunk navigation.
 - **Syntax highlighting** that matches your *actual* color theme: the active
   theme's JSON is resolved host-side (includes merged) and loaded into shiki.
 - **Live refresh**: the diff updates in place as you edit and save, or as the
-  git state changes.
+  git state changes. Diffs are computed on a background thread, so even huge
+  files never freeze the editor.
 - Respects your `editor.*` settings (font, line height, minimap, …).
 
 ## Usage
@@ -43,12 +48,14 @@ word-level intra-line highlights and chunk navigation.
 - Right-click a file in the Source Control view → **Open Diff**.
 - Changed files show a diff button in the editor title bar.
 - **Flow Diff: Open Diff (Index vs HEAD)** compares the staged copy instead.
+- **Flow Diff: Compare with Branch or Revision…** — from the command palette,
+  the Explorer / Source Control / editor tab context menus, or the `…` menu of
+  an open Flow Diff panel.
 - By default Flow Diff also takes over the diff tabs opened by the built-in
   git extension (setting `flowDiff.interceptGitOpenChange`).
 
 ## Roadmap
 
-- Compare with arbitrary branch/revision.
 - Collapsible unchanged regions; `F7` past the last change jumps to the next
   changed file.
 - Local Changes tree view grouped by directory.
