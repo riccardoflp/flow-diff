@@ -2,7 +2,7 @@
  * Pure diff engine: (oldText, newText) → AlignedDiffModel.
  * No `vscode` import — unit-testable with `node --test`.
  */
-import { diffLines, diffWordsWithSpace } from 'diff';
+import { Change, diffLines, diffWordsWithSpace, LinesOptions } from 'diff';
 import { AlignedDiffModel, CharRange, DiffChunk, DiffRow } from './model';
 
 export interface ComputeDiffInput {
@@ -12,6 +12,15 @@ export interface ComputeDiffInput {
   rightLabel: string;
   languageId: string;
   filePath: string;
+  /** Give up with DiffTooComplexError after this many milliseconds. */
+  timeoutMs?: number;
+}
+
+/** The line diff exceeded `timeoutMs` (huge file with many scattered changes). */
+export class DiffTooComplexError extends Error {
+  constructor() {
+    super('too many differences to display');
+  }
 }
 
 /**
@@ -21,7 +30,7 @@ export interface ComputeDiffInput {
 const INTRA_LINE_SKIP_RATIO = 0.65;
 
 export function computeDiff(input: ComputeDiffInput): AlignedDiffModel {
-  const parts = diffLines(normalizeEol(input.oldText), normalizeEol(input.newText));
+  const parts = lineParts(normalizeEol(input.oldText), normalizeEol(input.newText), input.timeoutMs);
   const rows: DiffRow[] = [];
   const chunks: DiffChunk[] = [];
   let leftLine = 1;
@@ -68,6 +77,16 @@ export function computeDiff(input: ComputeDiffInput): AlignedDiffModel {
     languageId: input.languageId,
     filePath: input.filePath,
   };
+}
+
+function lineParts(oldText: string, newText: string, timeoutMs: number | undefined): Change[] {
+  // jsdiff supports `timeout` (returns undefined when exceeded) but its typings lag behind
+  const options: LinesOptions & { timeout?: number } = timeoutMs === undefined ? {} : { timeout: timeoutMs };
+  const parts = diffLines(oldText, newText, options) as Change[] | undefined;
+  if (!parts) {
+    throw new DiffTooComplexError();
+  }
+  return parts;
 }
 
 function buildChunk(

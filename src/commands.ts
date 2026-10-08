@@ -118,12 +118,12 @@ async function openDiff(
     leftRef: 'HEAD',
     rightSide,
   };
-  const model = await buildModel(git, descriptor, { interactive: true });
-  if (!model) {
+  const built = await buildModel(git, descriptor, { interactive: true });
+  if (!built) {
     return;
   }
   const panel = registry.getOrCreate(descriptor);
-  panel.setModel(model);
+  panel.setModel(built.model, built.inputKey);
   panel.reveal();
 }
 
@@ -148,12 +148,12 @@ async function openDiffAtRefs(
     rightSide: 'worktree',
     rightRef: args.rightRef,
   };
-  const model = await buildModel(git, descriptor, { interactive: true });
-  if (!model) {
+  const built = await buildModel(git, descriptor, { interactive: true });
+  if (!built) {
     return;
   }
   const panel = registry.getOrCreate(descriptor);
-  panel.setModel(model);
+  panel.setModel(built.model, built.inputKey);
   panel.reveal();
 }
 

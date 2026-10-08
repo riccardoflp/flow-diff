@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { ChunkActions } from './chunkActions';
 import { registerCommands } from './commands';
+import { diffEngine } from './diffBuilder';
 import { GitService } from './git/gitService';
 import { PanelRegistry } from './panel/panelRegistry';
 import { ThemeService } from './theme/themeService';
@@ -19,6 +20,7 @@ export function activate(context: vscode.ExtensionContext): void {
   context.subscriptions.push(
     registry,
     refresher,
+    diffEngine,
     new DiffTakeover(),
     vscode.window.onDidChangeActiveColorTheme(() => {
       for (const panel of registry.all()) {

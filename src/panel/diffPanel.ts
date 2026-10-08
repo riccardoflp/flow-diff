@@ -30,6 +30,7 @@ export class DiffPanel {
   private readonly panel: vscode.WebviewPanel;
   private readonly disposables: vscode.Disposable[] = [];
   private model: AlignedDiffModel | undefined;
+  private modelInputKey: string | undefined;
   private webviewReady = false;
   private initSent = false;
 
@@ -90,6 +91,11 @@ export class DiffPanel {
     return this.model;
   }
 
+  /** Hash of the inputs `currentModel` was built from (refresh skips when unchanged). */
+  get inputKey(): string | undefined {
+    return this.modelInputKey;
+  }
+
   private setSideContext(): void {
     void vscode.commands.executeCommand(
       'setContext',
@@ -102,8 +108,9 @@ export class DiffPanel {
     this.panel.reveal();
   }
 
-  setModel(model: AlignedDiffModel): void {
+  setModel(model: AlignedDiffModel, inputKey: string): void {
     this.model = model;
+    this.modelInputKey = inputKey;
     if (!this.webviewReady) {
       return;
     }

@@ -81,11 +81,10 @@ Bridge Diff → Flow Diff: va ricreato sul commit di release.
 
 Prima delle nuove feature: problemi trovati in review, tutti lato host.
 
-- [ ] **Guard file enormi anche nel refresh**: oggi il limite di
-      `diffBuilder` vale solo per `interactive`; accettato un file da 100k+
-      righe, ogni refresh (250ms durante il typing) ricalcola il diff O(N·M)
-      sul thread dell'extension host. Spostare `computeDiff` in un
-      worker_thread e/o saltare i refresh oltre soglia
+- [x] **Diff fuori dal thread dell'extension host**: `computeDiff` +
+      `markStagedChunks` girano in un worker_thread (`diffEngine.ts`), con
+      timeout jsdiff di 5s → "too many differences" (al refresh resta
+      l'ultimo modello buono)
 - [ ] **Edit sync incrementale**: la webview manda l'intero testo ogni
       200ms e l'host sostituisce tutto il documento. Inviare i delta di
       `onDidChangeModelContent` e applicarli come edit minimi (undo stack e
@@ -96,9 +95,10 @@ Prima delle nuove feature: problemi trovati in review, tutti lato host.
       (righe nuove nello stile EOL dell'index), "No newline at end of file",
       unstage di file nuovi (`git rm --cached`). Round-trip su git reale in
       `test/chunkPatch.test.ts`
-- [ ] **Refresh mirato**: su `repo.state.onDidChange` ricalcolare solo i
-      pannelli il cui contenuto è cambiato (hash dei tre lati) invece di
-      tutti in sequenza
+- [x] **Refresh mirato**: eventi documento → solo i pannelli di quel file,
+      stato git → solo quelli del repo; hash sha1 degli input per saltare
+      diff e postMessage quando nulla è cambiato; run serializzati (niente
+      modelli vecchi che arrivano dopo quelli nuovi)
 - [ ] **Encoding**: oggi solo UTF-8 (UTF-16 ha `\0` → scambiato per binario).
       Rispettare `files.encoding` / BOM
 - [ ] Test unitari della mappa di `scrollSync` (matematica pura, estraibile)

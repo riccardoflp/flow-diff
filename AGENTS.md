@@ -29,11 +29,15 @@ Modifiche solo-webview: ricompila e "Developer: Reload Webviews" nel dev host.
 src/
 ├── extension.ts            # activate(): wiring di tutto
 ├── commands.ts             # comandi: openDiff/openDiffStaged/nav/file actions
-├── diffBuilder.ts          # buildModel + refreshPanel (guard binari/file enormi)
+├── diffBuilder.ts          # buildModel + refreshPanel (guard binari/file enormi,
+│                           #   skip se l'hash degli input non cambia)
+├── diffEngine.ts           # job di diff su worker_thread (fallback inline)
+├── worker/diffWorker.ts    # entry del worker: runDiffJob
 ├── chunkActions.ts         # revert (WorkspaceEdit) / stage / unstage per chunk
 ├── diff/                   # PURO: niente import vscode, testabile con node --test
 │   ├── model.ts            # AlignedDiffModel: rows (con filler) + chunks
-│   ├── computeDiff.ts      # jsdiff → modello (word-diff con guard 65%)
+│   ├── computeDiff.ts      # jsdiff → modello (word-diff con guard 65%, timeout)
+│   ├── diffJob.ts          # computeDiff + markStaged, serializzabile per il worker
 │   ├── hunks.ts            # hunk di riga + span per intersecarli coi chunk
 │   ├── staged.ts           # marca i chunk già nell'index
 │   ├── chunkPatch.ts       # stage/unstage chunk → patch forward sull'index
@@ -46,7 +50,8 @@ src/
 ├── panel/                  # DiffPanel (webview, CSP, messaggi) + registry dedupe
 ├── theme/themeService.ts   # tema attivo → JSON (include risolti, nome slug)
 ├── watch/
-│   ├── refresher.ts        # refresh debounced 250ms + context key
+│   ├── refresher.ts        # refresh debounced 250ms, solo pannelli toccati,
+│   │                       #   run mai sovrapposti + context key
 │   └── diffTakeover.ts     # intercetta i tab diff nativi e apre Flow Diff
 └── webview/                # bundlato da esbuild (esm+splitting), tsconfig proprio
     ├── main.ts             # orchestrazione: init/update/theme, edit sync
