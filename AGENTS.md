@@ -34,12 +34,15 @@ src/
 ├── diff/                   # PURO: niente import vscode, testabile con node --test
 │   ├── model.ts            # AlignedDiffModel: rows (con filler) + chunks
 │   ├── computeDiff.ts      # jsdiff → modello (word-diff con guard 65%)
-│   ├── patch.ts            # chunk → patch unified zero-context per git apply
+│   ├── hunks.ts            # hunk di riga + span per intersecarli coi chunk
+│   ├── staged.ts           # marca i chunk già nell'index
+│   ├── chunkPatch.ts       # stage/unstage chunk → patch forward sull'index
+│   ├── patch.ts            # hunk → patch unified zero-context per git apply
 │   └── protocol.ts         # messaggi host⇄webview (condiviso, niente vscode)
 ├── git/
 │   ├── api.d.ts            # typings vendorate dal tag release/1.90 di vscode
 │   ├── gitService.ts       # repo.show per ref ('' = index), contenuti worktree
-│   └── gitCli.ts           # spawn git apply --cached --unidiff-zero [-R]
+│   └── gitCli.ts           # git apply --cached --unidiff-zero, git rm --cached
 ├── panel/                  # DiffPanel (webview, CSP, messaggi) + registry dedupe
 ├── theme/themeService.ts   # tema attivo → JSON (include risolti, nome slug)
 ├── watch/
@@ -77,7 +80,10 @@ per non sovrascrivere i tasti in volo).
   la doppia registrazione lancia e abortisce `activate()`. Il takeover del diff
   di default si fa intercettando i tab (`watch/diffTakeover.ts`).
 - **`git apply` per hunk richiede `--unidiff-zero`** (le nostre patch non hanno
-  righe di contesto). Stage di un file untracked = `repo.add` (niente index entry).
+  righe di contesto). Le patch partono sempre dal contenuto *esatto* dell'index
+  (mai da HEAD↔worktree: con file parzialmente staged le righe non tornano).
+  Stage di un file untracked = `repo.add`; unstage di un file senza HEAD =
+  `git rm --cached`.
 - **Nomi tema Monaco**: solo `[a-zA-Z0-9-]` → `themeService` slugifica il nome.
 - **`src/diff/` deve restare puro**: niente `import vscode`, è condiviso con la
   webview e coperto da `node --test`.

@@ -1,24 +1,16 @@
 import * as assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { computeDiff } from '../diff/computeDiff';
-import { synthesizeChunkPatch } from '../diff/patch';
+import { lineHunks } from '../diff/hunks';
+import { synthesizePatch } from '../diff/patch';
 
-function diff(oldText: string, newText: string) {
-  return computeDiff({
-    oldText,
-    newText,
-    leftLabel: 'HEAD',
-    rightLabel: 'Working Tree',
-    languageId: 'plaintext',
-    filePath: 'sample.txt',
-  });
+/** Patch of every hunk between the two texts. */
+function patchAll(oldText: string, newText: string, path = 'sample.txt'): string {
+  return synthesizePatch(path, oldText, newText, lineHunks(oldText, newText), { addedEol: 'raw' });
 }
 
-test('patch for a modified chunk carries hunk header and -/+ lines', () => {
-  const model = diff('a\nb\nc\n', 'a\nB\nc\n');
-  const patch = synthesizeChunkPatch('dir/sample.txt', model, model.chunks[0]);
+test('patch for a modified hunk carries hunk header and -/+ lines', () => {
   assert.equal(
-    patch,
+    patchAll('a\nb\nc\n', 'a\nB\nc\n', 'dir/sample.txt'),
     [
       'diff --git a/dir/sample.txt b/dir/sample.txt',
       '--- a/dir/sample.txt',
@@ -32,21 +24,44 @@ test('patch for a modified chunk carries hunk header and -/+ lines', () => {
 });
 
 test('patch for a pure insertion uses a zero-count old side', () => {
-  const model = diff('a\nc\n', 'a\nb\nc\n');
-  const patch = synthesizeChunkPatch('sample.txt', model, model.chunks[0]);
-  assert.ok(patch.includes('@@ -1,0 +2,1 @@'));
-  assert.ok(patch.endsWith('@@ -1,0 +2,1 @@\n+b\n'));
+  assert.ok(patchAll('a\nc\n', 'a\nb\nc\n').endsWith('@@ -1,0 +2,1 @@\n+b\n'));
 });
 
 test('patch for a pure deletion uses a zero-count new side', () => {
-  const model = diff('a\nb\nc\n', 'a\nc\n');
-  const patch = synthesizeChunkPatch('sample.txt', model, model.chunks[0]);
-  assert.ok(patch.includes('@@ -2,1 +1,0 @@'));
-  assert.ok(patch.includes('\n-b\n'));
+  assert.ok(patchAll('a\nb\nc\n', 'a\nc\n').endsWith('@@ -2,1 +1,0 @@\n-b\n'));
 });
 
 test('windows-style relative paths are normalized to forward slashes', () => {
-  const model = diff('a\n', 'b\n');
-  const patch = synthesizeChunkPatch('src\\nested\\file.ts', model, model.chunks[0]);
-  assert.ok(patch.startsWith('diff --git a/src/nested/file.ts b/src/nested/file.ts'));
+  assert.ok(patchAll('a\n', 'b\n', 'src\\nested\\file.ts').startsWith(
+    'diff --git a/src/nested/file.ts b/src/nested/file.ts'
+  ));
+});
+
+test('new-side starts only count the hunks that are part of the patch', () => {
+  const oldText = 'a\nb\nc\nd\n';
+  const newText = 'x\ny\na\nb\nc\nD\n';
+  const [insertion, modification] = lineHunks(oldText, newText);
+  // the insertion above is left out, so D stays at line 4
+  const patch = synthesizePatch('f', oldText, newText, [modification], { addedEol: 'raw' });
+  assert.ok(patch.endsWith('@@ -4,1 +4,1 @@\n-d\n+D\n'));
+  const both = synthesizePatch('f', oldText, newText, [modification, insertion], { addedEol: 'raw' });
+  assert.ok(both.includes('@@ -0,0 +1,2 @@\n+x\n+y\n@@ -4,1 +6,1 @@'));
+});
+
+test('a last line without newline gets the no-newline marker', () => {
+  assert.ok(
+    patchAll('a\nb', 'a\nB').endsWith(
+      '@@ -2,1 +2,1 @@\n-b\n\\ No newline at end of file\n+B\n\\ No newline at end of file\n'
+    )
+  );
+});
+
+test('removed lines keep their CR; added lines follow addedEol', () => {
+  const oldText = 'a\r\nb\r\n';
+  const newText = 'a\nB\n';
+  const hunks = lineHunks(oldText, newText);
+  const crlf = synthesizePatch('f', oldText, newText, hunks, { addedEol: 'crlf' });
+  assert.ok(crlf.endsWith('-b\r\n+B\r\n'));
+  const lf = synthesizePatch('f', oldText, newText, hunks, { addedEol: 'lf' });
+  assert.ok(lf.endsWith('-b\r\n+B\n'));
 });

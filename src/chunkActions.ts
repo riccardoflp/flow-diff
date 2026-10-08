@@ -1,9 +1,11 @@
 import * as path from 'path';
 import * as vscode from 'vscode';
 import { AlignedDiffModel, DiffChunk } from './diff/model';
-import { synthesizeChunkPatch } from './diff/patch';
+import { stagePatch, unstagePatch } from './diff/chunkPatch';
+import { normalizeEol } from './diff/hunks';
 import { refreshPanel } from './diffBuilder';
-import { applyPatchToIndex } from './git/gitCli';
+import { Repository } from './git/api';
+import { applyPatchToIndex, removeFromIndex } from './git/gitCli';
 import { GitService } from './git/gitService';
 import { DiffPanel } from './panel/diffPanel';
 
@@ -28,7 +30,7 @@ export class ChunkActions {
           await this.stageChunk(panel, model, chunk);
           break;
         case 'unstageChunk':
-          await this.applyToIndex(panel, model, chunk, true);
+          await this.unstageChunk(panel, model, chunk);
           break;
       }
       await refreshPanel(this.git, panel);
@@ -90,33 +92,89 @@ export class ChunkActions {
     await document.save();
   }
 
+  /** Moves the index towards the worktree on the chunk's region. */
   private async stageChunk(
     panel: DiffPanel,
     model: AlignedDiffModel,
     chunk: DiffChunk
   ): Promise<void> {
-    const repo = await this.git.getRepository(panel.descriptor.fileUri);
-    if (!repo) {
-      return;
-    }
-    const head = await this.git.getContent(repo, panel.descriptor.fileUri, { ref: 'HEAD' });
-    if (head === undefined) {
+    const { repo, relative } = await this.resolve(panel);
+    const { fileUri } = panel.descriptor;
+    const index = await this.git.getContent(repo, fileUri, 'index');
+    if (index === undefined) {
       // untracked file: there is no index entry to patch — stage it whole
-      await repo.add([panel.descriptor.fileUri.fsPath]);
+      await repo.add([fileUri.fsPath]);
       return;
     }
-    await this.applyToIndex(panel, model, chunk, false);
+    const worktree = (await this.git.getContent(repo, fileUri, 'worktree')) ?? '';
+    assertSideMatches(model, 'right', worktree);
+    const patch = stagePatch(relative, index, worktree, {
+      start: chunk.rightStart,
+      count: chunk.rightCount,
+    });
+    if (patch) {
+      await applyPatchToIndex(panel.descriptor.repoRoot, patch);
+    }
   }
 
-  private async applyToIndex(
+  /**
+   * Moves the index back towards HEAD on the chunk's region. In the index
+   * view the chunk's right side is the index; in the worktree view (staged
+   * chunk) its left side is HEAD.
+   */
+  private async unstageChunk(
     panel: DiffPanel,
     model: AlignedDiffModel,
-    chunk: DiffChunk,
-    reverse: boolean
+    chunk: DiffChunk
   ): Promise<void> {
-    const { repoRoot, fileUri } = panel.descriptor;
-    const relative = path.relative(repoRoot, fileUri.fsPath);
-    await applyPatchToIndex(repoRoot, synthesizeChunkPatch(relative, model, chunk), reverse);
+    const { repo, relative } = await this.resolve(panel);
+    const { fileUri, repoRoot, rightSide } = panel.descriptor;
+    const [index, head] = await Promise.all([
+      this.git.getContent(repo, fileUri, 'index'),
+      this.git.getContent(repo, fileUri, { ref: 'HEAD' }),
+    ]);
+    if (index === undefined) {
+      return; // nothing staged
+    }
+    if (head === undefined) {
+      // added in the index, not in HEAD: the whole file is the one chunk
+      await removeFromIndex(repoRoot, relative);
+      return;
+    }
+    const fromIndexView = rightSide === 'index';
+    assertSideMatches(model, fromIndexView ? 'right' : 'left', fromIndexView ? index : head);
+    const patch = fromIndexView
+      ? unstagePatch(relative, index, head, { start: chunk.rightStart, count: chunk.rightCount }, 'index')
+      : unstagePatch(relative, index, head, { start: chunk.leftStart, count: chunk.leftCount }, 'head');
+    if (patch) {
+      await applyPatchToIndex(repoRoot, patch);
+    }
+  }
+
+  private async resolve(panel: DiffPanel): Promise<{ repo: Repository; relative: string }> {
+    const repo = await this.git.getRepository(panel.descriptor.fileUri);
+    if (!repo) {
+      throw new Error('no git repository for this file');
+    }
+    return { repo, relative: path.relative(panel.descriptor.repoRoot, panel.descriptor.fileUri.fsPath) };
+  }
+}
+
+/** Race guard: the chunk coordinates are only valid for the text the model was built from. */
+function assertSideMatches(model: AlignedDiffModel, side: 'left' | 'right', text: string): void {
+  const expected: string[] = [];
+  for (const row of model.rows) {
+    const cell = side === 'left' ? row.left : row.right;
+    if (cell.kind !== 'filler' && cell.text !== undefined) {
+      expected.push(cell.text);
+    }
+  }
+  const actual = normalizeEol(text).split('\n');
+  if (actual[actual.length - 1] === '') {
+    actual.pop();
+  }
+  if (actual.length !== expected.length || actual.some((line, i) => line !== expected[i])) {
+    throw new Error('the file changed since the diff was computed, retry');
   }
 }
 

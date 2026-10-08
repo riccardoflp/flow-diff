@@ -25,11 +25,11 @@ modifiche locali e compare-with arbitrario.
 ## ✅ Fase 2 — Azioni (fatto)
 
 - [x] Per chunk nel gutter: revert ⟲ (WorkspaceEdit + save, undoable),
-      stage + (`git apply --cached --unidiff-zero`), unstage − (`-R`)
+      stage + / unstage − (`git apply --cached --unidiff-zero`)
 - [x] Patch sintetizzati da `src/diff/patch.ts`, validati round-trip su git reale
 - [x] File-level in title bar: Open File, Stage, Unstage, Discard (conferma modale)
-- [x] Limite noto: stage chunk può fallire su file già parzialmente staged
-      (index ≠ HEAD sulle stesse righe) → warning, nessuna corruzione
+- [x] ~~Limite noto: stage chunk falliva su file già parzialmente staged~~
+      → risolto in fase R (patch costruite sull'index)
 - [x] Indicatore "staged" nella vista worktree: `src/diff/staged.ts` confronta
       index↔worktree e marca i chunk già nell'index (`chunk.staged`); resa
       opacizzata (sfondi riga + connettore tratteggiato) e bottone + → −
@@ -90,9 +90,12 @@ Prima delle nuove feature: problemi trovati in review, tutti lato host.
       200ms e l'host sostituisce tutto il documento. Inviare i delta di
       `onDidChangeModelContent` e applicarli come edit minimi (undo stack e
       cursori degli altri editor intatti, costo O(modifica))
-- [ ] **Stage su file parzialmente staged**: costruire la patch di stage da
-      index↔worktree (non HEAD↔worktree) e quella di unstage da HEAD↔index;
-      elimina il limite noto della fase 2
+- [x] **Stage su file parzialmente staged**: `diff/chunkPatch.ts` costruisce
+      patch *forward* sull'index esatto (stage: index→worktree, unstage:
+      index→HEAD) con i soli hunk che toccano il chunk. Gestisce CRLF
+      (righe nuove nello stile EOL dell'index), "No newline at end of file",
+      unstage di file nuovi (`git rm --cached`). Round-trip su git reale in
+      `test/chunkPatch.test.ts`
 - [ ] **Refresh mirato**: su `repo.state.onDidChange` ricalcolare solo i
       pannelli il cui contenuto è cambiato (hash dei tre lati) invece di
       tutti in sequenza

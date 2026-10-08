@@ -6,16 +6,19 @@ import { spawn } from 'child_process';
  * patch to `git apply --cached`. `--unidiff-zero` is required because our
  * patches carry no context lines.
  */
-export function applyPatchToIndex(
-  repoRoot: string,
-  patch: string,
-  reverse: boolean
-): Promise<void> {
-  const args = ['apply', '--cached', '--unidiff-zero', '--whitespace=nowarn'];
-  if (reverse) {
-    args.push('-R');
-  }
-  args.push('-');
+export function applyPatchToIndex(repoRoot: string, patch: string): Promise<void> {
+  return runGit(repoRoot, ['apply', '--cached', '--unidiff-zero', '--whitespace=nowarn', '-'], patch);
+}
+
+/**
+ * Drops a file from the index, leaving the worktree alone: unstaging a file
+ * that has no HEAD version (`git reset` needs a commit to reset to).
+ */
+export function removeFromIndex(repoRoot: string, repoRelativePath: string): Promise<void> {
+  return runGit(repoRoot, ['rm', '--cached', '--quiet', '--', repoRelativePath]);
+}
+
+function runGit(repoRoot: string, args: string[], stdin?: string): Promise<void> {
   return new Promise((resolve, reject) => {
     const child = spawn('git', args, { cwd: repoRoot });
     let stderr = '';
@@ -25,9 +28,9 @@ export function applyPatchToIndex(
       if (code === 0) {
         resolve();
       } else {
-        reject(new Error(stderr.trim() || `git apply exited with code ${code}`));
+        reject(new Error(stderr.trim() || `git ${args[0]} exited with code ${code}`));
       }
     });
-    child.stdin.end(patch);
+    child.stdin.end(stdin ?? '');
   });
 }
