@@ -119,4 +119,5 @@ per non sovrascrivere i tasti in volo).
 - Test: `node --test` su `out/test/**` — niente harness VS Code.
 - Colori solo via `--vscode-*` CSS vars (+ fallback); tema sintassi dal JSON
   del tema attivo, fallback Dark+/Light+.
-- Commit footer: vedi convenzioni del repo (Co-Authored-By quando generato).
+- Commit: niente footer Co-Authored-By né altre attribuzioni a strumenti;
+  merge su `main` solo fast-forward.
