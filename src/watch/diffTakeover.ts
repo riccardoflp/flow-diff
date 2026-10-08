@@ -1,4 +1,3 @@
-import * as path from 'path';
 import * as vscode from 'vscode';
 
 /**
@@ -62,36 +61,12 @@ export class DiffTakeover implements vscode.Disposable {
           vscode.commands.executeCommand('flowDiff.openDiffStaged', vscode.Uri.file(modified.fsPath));
       }
       if (isHistoricalRef(leftRef) && isHistoricalRef(rightRef)) {
-        // Source Control Graph / GitLens commit history: commit A vs commit B (read-only)
+        // Source Control Graph / commit history: commit A vs commit B (read-only)
         return () =>
           vscode.commands.executeCommand('flowDiff.openDiffRefs', {
             fileUri: vscode.Uri.file(modified.fsPath),
             leftRef,
             rightRef,
-          });
-      }
-    }
-    if (original.scheme === 'gitlens' && modified.scheme === 'gitlens') {
-      // GitLens file-history: commit A vs commit B (read-only)
-      const orig = parseGitLensUri(original);
-      const mod = parseGitLensUri(modified);
-      if (orig && mod) {
-        return () =>
-          vscode.commands.executeCommand('flowDiff.openDiffRefs', {
-            fileUri: orig.fileUri,
-            leftRef: orig.ref,
-            rightRef: mod.ref,
-          });
-      }
-    }
-    if (original.scheme === 'gitlens' && modified.scheme === 'file') {
-      // GitLens "open changes with...": historical commit vs working tree
-      const orig = parseGitLensUri(original);
-      if (orig) {
-        return () =>
-          vscode.commands.executeCommand('flowDiff.openDiffRefs', {
-            fileUri: modified,
-            leftRef: orig.ref,
           });
       }
     }
@@ -117,60 +92,4 @@ function gitRef(uri: vscode.Uri): string | undefined {
   } catch {
     return undefined;
   }
-}
-
-interface GitLensUriData {
-  ref: string;
-  fileUri: vscode.Uri;
-}
-
-interface GitLensMetadata {
-  ref?: string | { sha?: string };
-  repoPath?: string;
-  /** Field name differs across GitLens versions. */
-  path?: string;
-  fileName?: string;
-}
-
-/**
- * Tries to extract the commit ref and file uri from a gitlens:// revision URI.
- * Modern GitLens (v12+) hex-encodes a `{ ref, repoPath }` JSON blob into the
- * uri *authority* and carries the absolute file path in the uri path; older
- * versions used a JSON *query* with a repo-relative path instead. Returns
- * undefined if neither format matches.
- */
-function parseGitLensUri(uri: vscode.Uri): GitLensUriData | undefined {
-  const fromAuthority = parseMetadata(Buffer.from(uri.authority, 'hex').toString('utf8'));
-  const authorityRef = fromAuthority && metadataRef(fromAuthority);
-  if (authorityRef) {
-    return { ref: authorityRef, fileUri: vscode.Uri.file(uri.path) };
-  }
-
-  const fromQuery = parseMetadata(uri.query);
-  const queryRef = fromQuery && metadataRef(fromQuery);
-  const filePath = fromQuery?.path ?? fromQuery?.fileName;
-  if (queryRef && fromQuery.repoPath && filePath) {
-    return { ref: queryRef, fileUri: vscode.Uri.file(path.join(fromQuery.repoPath, filePath)) };
-  }
-  return undefined;
-}
-
-function parseMetadata(raw: string): GitLensMetadata | undefined {
-  try {
-    const parsed: unknown = JSON.parse(raw);
-    return typeof parsed === 'object' && parsed !== null ? (parsed as GitLensMetadata) : undefined;
-  } catch {
-    return undefined;
-  }
-}
-
-/** '~' marks the working tree in GitLens uris — not a commit, so excluded. */
-function metadataRef(metadata: GitLensMetadata): string | undefined {
-  if (typeof metadata.ref === 'string' && metadata.ref !== '~' && metadata.ref !== '') {
-    return metadata.ref;
-  }
-  if (typeof metadata.ref === 'object' && metadata.ref?.sha) {
-    return metadata.ref.sha;
-  }
-  return undefined;
 }
