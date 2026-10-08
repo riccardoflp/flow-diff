@@ -15,6 +15,10 @@ export interface DiffSettings {
   rightSide: 'worktree' | 'index' | 'ref';
   /** False when the left side is not HEAD: the worktree pane only offers revert. */
   canStage: boolean;
+  /** Initial state of the "collapse unchanged regions" toggle. */
+  collapseUnchanged: boolean;
+  /** F7 past the last chunk moves to the next changed file (HEAD diffs only). */
+  fileNavigation: boolean;
 }
 
 /** The user's active color theme, resolved host-side and loadable by shiki. */
@@ -37,7 +41,9 @@ export type HostMessage =
 export type WebviewMessage =
   | { type: 'ready' }
   | { type: 'currentChunkChanged'; chunkId: number }
-  | { type: 'openAt'; side: 'left' | 'right'; line: number }
+  /** Jump to Source: open the real file at this (worktree-side) line. */
+  | { type: 'openAt'; line: number }
+  | { type: 'navigateFile'; direction: 'next' | 'prev' }
   | { type: 'revertChunk'; chunkId: number }
   | { type: 'stageChunk'; chunkId: number }
   | { type: 'unstageChunk'; chunkId: number }

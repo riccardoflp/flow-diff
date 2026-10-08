@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { ThemeService } from '../theme/themeService';
-import { ChunkActionMessage, DiffDescriptor, DiffPanel, diffKey } from './diffPanel';
+import { DiffDescriptor, DiffPanel, diffKey, PanelHandlers } from './diffPanel';
 
 /** Dedupes panels per (repo, file, refs): re-invoking reveals instead of stacking. */
 export class PanelRegistry implements vscode.Disposable {
@@ -9,14 +9,14 @@ export class PanelRegistry implements vscode.Disposable {
   constructor(
     private readonly extensionUri: vscode.Uri,
     private readonly themes: ThemeService,
-    private readonly onChunkAction: (panel: DiffPanel, message: ChunkActionMessage) => void
+    private readonly handlers: PanelHandlers
   ) {}
 
   getOrCreate(descriptor: DiffDescriptor): DiffPanel {
     const key = diffKey(descriptor);
     let panel = this.panels.get(key);
     if (!panel) {
-      panel = new DiffPanel(this.extensionUri, descriptor, this.themes, this.onChunkAction, () =>
+      panel = new DiffPanel(this.extensionUri, descriptor, this.themes, this.handlers, () =>
         this.panels.delete(key)
       );
       this.panels.set(key, panel);

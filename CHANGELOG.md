@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Unchanged regions collapse to a clickable "⋯ N unchanged lines" bar with 3
+  lines of context (toolbar toggle, `flowDiff.collapseUnchanged`).
+- `F7` past the last change (`Shift+F7` before the first) shows a hint, and
+  pressed again opens the next (previous) changed file in place.
+- Jump to Source (`F4`, context menu) opens the file at the cursor line, also
+  from the HEAD pane.
 - Compare with any branch, tag or commit (`Flow Diff: Compare with Branch or
   Revision…`), or a typed revision such as `HEAD~3`. Against a revision other
   than `HEAD`, chunks offer revert only and are never marked as staged (this

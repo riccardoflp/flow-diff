@@ -124,15 +124,28 @@ Prima delle nuove feature: problemi trovati in review, tutti lato host.
 - [x] Label: hash abbreviati a 8, nomi di branch/tag interi
 - [ ] Verifica in F5 (QuickPick e menu non sono coperti dai test)
 
-## 🔲 Fase 4 — Navigazione e lettura
+## ✅ Fase 4 — Navigazione e lettura (fatto)
 
-- [ ] Collapse delle regioni invariate (i connettori bezier sono già pronti
-      per geometrie non allineate)
-- [ ] F7 oltre l'ultimo chunk → file modificato successivo (come WebStorm):
-      si attraversa tutto il changeset senza uscire dal diff
-- [ ] "n of m" nel titolo del pannello (`currentChunkChanged` già emesso)
-- [ ] Word-wrap opzionale (`settings.wrap` già nel protocollo)
-- [ ] Double-click su una riga per aprirla nell'editor vero
+- [x] Collapse delle regioni invariate: `diff/unchanged.ts` (puro) +
+      `webview/collapse.ts` con `setHiddenAreas` (API interna, la usa il diff
+      editor di Monaco; feature-detect) e view zone `showInHiddenAreas`
+      cliccabili. 3 righe di contesto, minimo 4 righe nascoste; regioni aperte
+      ricordate per riga HEAD; si riaprono se il cursore ci salta dentro
+      (find, go to line). Toggle in toolbar + `flowDiff.collapseUnchanged`
+- [x] F7 oltre l'ultimo chunk → hint, secondo F7 → file modificato
+      successivo (ordine per path, wrap, salta binari/troppo complessi); solo
+      per diff contro HEAD
+- [x] Jump to Source (F4 + menu contestuale), dal lato HEAD mappa sulla riga
+      del worktree (`diff/lineMap.ts`)
+- [x] Word-wrap: già coperto, i pannelli seguono `editor.wordWrap` e lo
+      scroll sync regge il wrap
+- [~] "n of m" nel titolo del pannello: scartato, il contatore è già nella
+      toolbar e un titolo che cambia a ogni F7 sporca la tab
+- [x] `scripts/webview-harness.js`: la webview vera in un browser normale
+      (modello da computeDiff, `acquireVsCodeApi` finto) per verificare UI
+      senza F5
+- [ ] Verifica in F5 di Find / Ctrl+G dentro regioni nascoste (nell'harness
+      le combinazioni con Ctrl non arrivano a Monaco)
 
 ## 🔲 Fase 5 — Albero "Local Changes"
 

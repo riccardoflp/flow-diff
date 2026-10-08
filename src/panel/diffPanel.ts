@@ -31,6 +31,12 @@ export type ChunkActionMessage = Extract<
   { type: 'revertChunk' | 'stageChunk' | 'unstageChunk' }
 >;
 
+/** What a panel delegates to the rest of the extension. */
+export interface PanelHandlers {
+  chunkAction(panel: DiffPanel, message: ChunkActionMessage): void;
+  navigateFile(panel: DiffPanel, direction: 'next' | 'prev'): void;
+}
+
 export class DiffPanel {
   static readonly viewType = 'flowDiff.panel';
 
@@ -45,7 +51,7 @@ export class DiffPanel {
     extensionUri: vscode.Uri,
     readonly descriptor: DiffDescriptor,
     private readonly themes: ThemeService,
-    private readonly onChunkAction: (panel: DiffPanel, message: ChunkActionMessage) => void,
+    private readonly handlers: PanelHandlers,
     onDispose: () => void
   ) {
     const fileName = path.basename(descriptor.fileUri.fsPath);
@@ -120,6 +126,10 @@ export class DiffPanel {
     this.panel.reveal();
   }
 
+  close(): void {
+    this.panel.dispose();
+  }
+
   setModel(model: AlignedDiffModel, inputKey: string): void {
     this.model = model;
     this.modelInputKey = inputKey;
@@ -177,6 +187,11 @@ export class DiffPanel {
         editorOptions: this.readEditorOptions(),
         rightSide: this.descriptor.rightRef ? 'ref' : this.descriptor.rightSide,
         canStage: canStage(this.descriptor),
+        collapseUnchanged: vscode.workspace
+          .getConfiguration('flowDiff')
+          .get<boolean>('collapseUnchanged', true),
+        // the changed-files list only exists for HEAD↔worktree / HEAD↔index
+        fileNavigation: canStage(this.descriptor),
       },
       syntaxTheme: await this.themes.resolveActive(),
     });
@@ -196,13 +211,16 @@ export class DiffPanel {
         });
         break;
       }
+      case 'navigateFile':
+        this.handlers.navigateFile(this, message.direction);
+        break;
       case 'currentChunkChanged':
         // Reserved: could mirror "n of m" into the panel title.
         break;
       case 'revertChunk':
       case 'stageChunk':
       case 'unstageChunk':
-        this.onChunkAction(this, message);
+        this.handlers.chunkAction(this, message);
         break;
       case 'edit':
         void this.applyWebviewEdit(message.text);

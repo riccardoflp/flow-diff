@@ -2,6 +2,8 @@
 .github/**
 src/**
 out/test/**
+out/harness/**
+scripts/**
 out/**/*.map
 test-fixtures/**
 node_modules/**

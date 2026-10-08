@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { ChunkActions } from './chunkActions';
-import { registerCommands } from './commands';
+import { openAdjacentFile, registerCommands } from './commands';
 import { diffEngine } from './diffBuilder';
 import { GitService } from './git/gitService';
 import { PanelRegistry } from './panel/panelRegistry';
@@ -12,9 +12,10 @@ export function activate(context: vscode.ExtensionContext): void {
   const git = new GitService();
   const themes = new ThemeService();
   const chunkActions = new ChunkActions(git);
-  const registry = new PanelRegistry(context.extensionUri, themes, (panel, message) =>
-    void chunkActions.handle(panel, message.type, message.chunkId)
-  );
+  const registry: PanelRegistry = new PanelRegistry(context.extensionUri, themes, {
+    chunkAction: (panel, message) => void chunkActions.handle(panel, message.type, message.chunkId),
+    navigateFile: (panel, direction) => void openAdjacentFile(git, registry, panel, direction),
+  });
   const refresher = new Refresher(git, registry);
 
   context.subscriptions.push(

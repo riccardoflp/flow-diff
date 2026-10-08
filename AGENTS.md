@@ -23,6 +23,13 @@ diff: `../bridge-diff-playground` (sample.ts modificato, untracked.ts,
 staged.ts con index ≠ worktree ≠ HEAD).
 Modifiche solo-webview: ricompila e "Developer: Reload Webviews" nel dev host.
 
+Senza VS Code (es. agenti con un browser): `node scripts/webview-harness.js
+<old> <new>` genera `out/harness/` con la webview vera e un modello da
+`computeDiff`; servire `out/` (`python -m http.server 8765 --directory out`)
+e aprire `/harness/`. `window.__posted` = messaggi verso l'host,
+`window.__host(msg)` = messaggi dall'host. Click e tasti F funzionano; le
+combinazioni con Ctrl nel browser automatizzato non arrivano a Monaco.
+
 ## Architettura (due mondi, un protocollo)
 
 ```
@@ -45,6 +52,8 @@ src/
 │   ├── patch.ts            # hunk → patch unified zero-context per git apply
 │   ├── textEdit.ts         # sostituzione minima (edit dalla webview → documento)
 │   ├── scrollMap.ts        # mappa piecewise-linear dello scroll sync
+│   ├── unchanged.ts        # regioni invariate comprimibili
+│   ├── lineMap.ts          # riga HEAD → riga worktree (Jump to Source)
 │   └── protocol.ts         # messaggi host⇄webview (condiviso, niente vscode)
 ├── git/
 │   ├── api.d.ts            # typings vendorate dal tag release/1.90 di vscode
@@ -64,7 +73,8 @@ src/
     │                       #   applicato al centro del viewport (contesto
     │                       #   visibile sopra/sotto sui chunk grandi)
     ├── connectors.ts       # SVG genie nel gutter + bottoni azioni per chunk
-    ├── navigation.ts       # indice chunk corrente (side effect in main)
+    ├── navigation.ts       # indice chunk corrente, F7 oltre il bordo → file
+    ├── collapse.ts         # hidden areas + barre "⋯ N unchanged lines"
     └── render.ts           # layout statico + sideText(model, side)
 ```
 

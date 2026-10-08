@@ -192,6 +192,11 @@
           "type": "boolean",
           "default": true,
           "description": "Use Flow Diff instead of VS Code's built-in diff editor for git diffs opened from the Source Control panel, the commit graph, or GitLens."
+        },
+        "flowDiff.collapseUnchanged": {
+          "type": "boolean",
+          "default": true,
+          "description": "Collapse long runs of unchanged lines (keeping 3 lines of context around each change). Toggle per panel from the floating toolbar."
         }
       }
     },

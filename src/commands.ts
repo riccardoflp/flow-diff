@@ -2,7 +2,8 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import { buildModel, refreshPanel } from './diffBuilder';
 import { GitService } from './git/gitService';
-import { DiffDescriptor } from './panel/diffPanel';
+import { Change, Repository } from './git/api';
+import { DiffDescriptor, DiffPanel } from './panel/diffPanel';
 import { PanelRegistry } from './panel/panelRegistry';
 import { pickRef } from './refPicker';
 
@@ -178,6 +179,64 @@ async function openDiffAtRefs(
   const panel = registry.getOrCreate(descriptor);
   panel.setModel(built.model, built.inputKey);
   panel.reveal();
+}
+
+/**
+ * F7 past the last chunk: replaces the panel with the diff of the next (or
+ * previous) changed file, in path order, wrapping around. Files that cannot
+ * be diffed (binary, too complex) are skipped.
+ */
+export async function openAdjacentFile(
+  git: GitService,
+  registry: PanelRegistry,
+  panel: DiffPanel,
+  direction: 'next' | 'prev'
+): Promise<void> {
+  const { fileUri, rightSide, repoRoot } = panel.descriptor;
+  const repo = await git.getRepository(fileUri);
+  if (!repo) {
+    return;
+  }
+  const files = changedFiles(repo, rightSide);
+  const current = fileUri.fsPath;
+  // files after the current one in the given direction, then wrapping around
+  const below = files.filter((f) => compare(f, current) < 0);
+  const above = files.filter((f) => compare(f, current) > 0);
+  const candidates =
+    direction === 'next' ? [...above, ...below] : [...below.reverse(), ...above.reverse()];
+
+  for (const candidate of candidates) {
+    const descriptor: DiffDescriptor = {
+      repoRoot,
+      fileUri: vscode.Uri.file(candidate),
+      leftRef: 'HEAD',
+      rightSide,
+    };
+    const built = await buildModel(git, descriptor, { interactive: false });
+    if (built) {
+      const next = registry.getOrCreate(descriptor);
+      next.setModel(built.model, built.inputKey);
+      next.reveal();
+      if (next !== panel) {
+        panel.close();
+      }
+      return;
+    }
+  }
+  void vscode.window.showInformationMessage('Flow Diff: no other changed files.');
+}
+
+/** Paths with changes on the given side, sorted, without duplicates. */
+function changedFiles(repo: Repository, side: 'worktree' | 'index'): string[] {
+  // untrackedChanges is only populated with git.untrackedChanges = "separate"
+  const untracked = (repo.state as { untrackedChanges?: Change[] }).untrackedChanges ?? [];
+  const changes =
+    side === 'index' ? repo.state.indexChanges : [...repo.state.workingTreeChanges, ...untracked];
+  return [...new Set(changes.map((c) => c.uri.fsPath))].sort(compare);
+}
+
+function compare(a: string, b: string): number {
+  return a.localeCompare(b, undefined, { sensitivity: 'base', numeric: true });
 }
 
 /** Accepts a Uri, an SCM resource state, or nothing (→ active editor). */

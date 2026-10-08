@@ -264,3 +264,47 @@ body {
   text-align: center;
   opacity: 0.9;
 }
+
+.toolbar button.toggled {
+  background: var(--vscode-inputOption-activeBackground, rgba(0, 127, 212, 0.4));
+}
+
+.toolbar .codicon {
+  font-size: 14px;
+  vertical-align: middle;
+}
+
+/* "press F7 again" hint under the toolbar */
+.toolbar-hint {
+  position: fixed;
+  top: 64px;
+  right: 16px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: var(--vscode-editorWidget-background, #252526);
+  border: 1px solid var(--vscode-editorWidget-border, rgba(128, 128, 128, 0.35));
+  font-family: var(--vscode-font-family);
+  font-size: 12px;
+  z-index: 10;
+}
+
+.toolbar-hint[hidden] {
+  display: none;
+}
+
+/* ── Collapsed unchanged regions ─────────────────────────────────────── */
+
+.bd-collapsed {
+  display: flex;
+  align-items: center;
+  padding-left: 8px;
+  font-family: var(--vscode-font-family);
+  font-size: 12px;
+  color: var(--vscode-descriptionForeground, rgba(204, 204, 204, 0.7));
+  background: var(--vscode-diffEditor-unchangedRegionBackground, rgba(128, 128, 128, 0.12));
+  cursor: pointer;
+}
+
+.bd-collapsed:hover {
+  color: var(--vscode-foreground);
+}

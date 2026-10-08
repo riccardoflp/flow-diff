@@ -23,7 +23,13 @@ word-level intra-line highlights and chunk navigation.
   context visible above and below.
 - **Chunk navigation**: `F7` / `Shift+F7` (like WebStorm) or the floating
   toolbar, with a "n / m" counter; chunk markers in the overview ruler and
-  minimap.
+  minimap. Past the last change, `F7` again moves on to the next changed
+  file.
+- **Collapsed unchanged regions**: long runs of unchanged lines fold into a
+  clickable "⋯ N unchanged lines" bar, keeping 3 lines of context around each
+  change (toolbar toggle, setting `flowDiff.collapseUnchanged`).
+- **Jump to Source** (`F4` or the context menu) opens the real file at the
+  cursor line — from either pane.
 - **Per-chunk actions** in the center gutter: revert (⟲) and stage (+) for
   working-tree diffs, unstage (−) for index diffs — hunk-level staging via
   `git apply --cached`, also on partially staged files. Already-staged chunks
@@ -56,8 +62,6 @@ word-level intra-line highlights and chunk navigation.
 
 ## Roadmap
 
-- Collapsible unchanged regions; `F7` past the last change jumps to the next
-  changed file.
 - Local Changes tree view grouped by directory.
 
 ## Development

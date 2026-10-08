@@ -3,6 +3,8 @@ import * as monaco from 'monaco-editor/esm/vs/editor/editor.api.js';
 import 'monaco-editor/esm/vs/base/browser/ui/codicons/codicon/codicon.css';
 import { AlignedDiffModel, DiffChunk } from '../diff/model';
 import { DiffSettings, HostMessage, SyntaxTheme, WebviewMessage } from '../diff/protocol';
+import { rightLineForLeft } from '../diff/lineMap';
+import { Collapser } from './collapse';
 import { ChunkActionsConfig, Connectors } from './connectors';
 import {
   DiffEditors,
@@ -46,8 +48,13 @@ let editTimer: number | undefined;
 
 const connectors = new Connectors();
 const scrollSync = new ScrollSync(() => connectors.schedule());
+const collapser = new Collapser(true, () => connectors.schedule());
 const toolbar = createToolbar();
-const navigation = new Navigation(onNavChange);
+const navigation = new Navigation({
+  onChange: onNavChange,
+  onHint: showHint,
+  onFileJump: (direction) => post({ type: 'navigateFile', direction }),
+});
 
 window.addEventListener('message', (event: MessageEvent) => {
   const message = event.data as HostMessage;
@@ -86,6 +93,11 @@ async function onInit(
   theme: SyntaxTheme | undefined
 ): Promise<void> {
   settings = s;
+  navigation.setFileJumps(s.fileNavigation);
+  if (collapser.isEnabled !== s.collapseUnchanged) {
+    collapser.toggle();
+  }
+  toolbar.collapse.classList.toggle('toggled', collapser.isEnabled);
   layout = createLayout(root);
   editors = createEditors(layout.leftHost, layout.rightHost, s.editorOptions ?? {});
   const { monacoLanguage } = await initHighlighting(monaco, theme, m.languageId);
@@ -136,6 +148,9 @@ function refreshAll(m: AlignedDiffModel): void {
   }
   setHeaderLabels(layout, m);
   setDiffDecorations(m);
+  // hide unchanged regions first: the scroll map and connectors measure the result
+  collapser.attach(editors);
+  collapser.update(m);
 
   scrollSync.attach(editors.left, editors.right, m);
   connectors.attach(layout.gutter, editors.left, editors.right, m, chunkActions());
@@ -220,6 +235,31 @@ function wireKeys(eds: DiffEditors): void {
   for (const editor of [eds.left, eds.right]) {
     editor.addCommand(monaco.KeyCode.F7, () => navigation.next());
     editor.addCommand(monaco.KeyMod.Shift | monaco.KeyCode.F7, () => navigation.prev());
+    // F4, like WebStorm: open the real file at the cursor
+    editor.addAction({
+      id: 'flowDiff.jumpToSource',
+      label: 'Jump to Source',
+      keybindings: [monaco.KeyCode.F4],
+      contextMenuGroupId: 'navigation',
+      contextMenuOrder: 0,
+      run: (ed) => {
+        const line = ed.getPosition()?.lineNumber ?? 1;
+        if (model) {
+          post({ type: 'openAt', line: ed === eds.left ? rightLineForLeft(model, line) : line });
+        }
+      },
+    });
+  }
+}
+
+let hintTimer: number | undefined;
+
+function showHint(text: string | undefined): void {
+  window.clearTimeout(hintTimer);
+  toolbar.hint.hidden = text === undefined;
+  toolbar.hint.textContent = text ?? '';
+  if (text !== undefined) {
+    hintTimer = window.setTimeout(() => (toolbar.hint.hidden = true), 4000);
   }
 }
 
@@ -245,7 +285,12 @@ function chunkActions(): ChunkActionsConfig | undefined {
   };
 }
 
-function createToolbar(): { element: HTMLElement; counter: HTMLElement } {
+function createToolbar(): {
+  element: HTMLElement;
+  counter: HTMLElement;
+  collapse: HTMLElement;
+  hint: HTMLElement;
+} {
   const element = document.createElement('div');
   element.className = 'toolbar';
 
@@ -263,9 +308,21 @@ function createToolbar(): { element: HTMLElement; counter: HTMLElement } {
   next.title = 'Next Change (F7)';
   next.addEventListener('click', () => navigation.next());
 
-  element.append(prev, counter, next);
-  document.body.appendChild(element);
-  return { element, counter };
+  const collapse = document.createElement('button');
+  collapse.innerHTML = '<span class="codicon codicon-fold"></span>';
+  collapse.title = 'Collapse Unchanged Regions';
+  collapse.addEventListener('click', () => {
+    collapser.toggle();
+    collapse.classList.toggle('toggled', collapser.isEnabled);
+  });
+
+  const hint = document.createElement('div');
+  hint.className = 'toolbar-hint';
+  hint.hidden = true;
+
+  element.append(prev, counter, next, collapse);
+  document.body.append(element, hint);
+  return { element, counter, collapse, hint };
 }
 
 function post(message: WebviewMessage): void {
