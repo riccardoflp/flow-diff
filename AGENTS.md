@@ -61,6 +61,10 @@ src/
 │   └── gitCli.ts           # git apply --cached --unidiff-zero, git rm --cached
 ├── panel/                  # DiffPanel (webview, CSP, messaggi) + registry dedupe
 ├── theme/themeService.ts   # tema attivo → JSON (include risolti, nome slug)
+├── tree/                   # vista "Local Changes" nella Source Control
+│   ├── pathTree.ts         # PURO: path → albero cartelle compattato
+│   ├── localChanges.ts     # TreeDataProvider (gruppi staged/changes/untracked)
+│   └── treeCommands.ts     # stage/unstage/discard/open su file, cartelle, gruppi
 ├── watch/
 │   ├── refresher.ts        # refresh debounced 250ms, solo pannelli toccati,
 │   │                       #   run mai sovrapposti + context key

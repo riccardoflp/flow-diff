@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Local Changes view in Source Control: staged / unstaged / unversioned files
+  grouped by folder, opening Flow Diff on click, with stage, unstage, discard
+  and open actions on files, folders and groups.
 - Unchanged regions collapse to a clickable "⋯ N unchanged lines" bar with 3
   lines of context (toolbar toggle, `flowDiff.collapseUnchanged`).
 - `F7` past the last change (`Shift+F7` before the first) shows a hint, and

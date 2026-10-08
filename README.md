@@ -42,6 +42,10 @@ word-level intra-line highlights and chunk navigation.
   into the real document (kept dirty); `Ctrl+S` inside the diff saves.
 - **Syntax highlighting** that matches your *actual* color theme: the active
   theme's JSON is resolved host-side (includes merged) and loaded into shiki.
+- **Local Changes tree** in the Source Control view, like WebStorm's Commit
+  window: staged, unstaged and unversioned files grouped by folder; click to
+  open the diff, inline stage / unstage / discard on files, folders or whole
+  groups.
 - **Live refresh**: the diff updates in place as you edit and save, or as the
   git state changes. Diffs are computed on a background thread, so even huge
   files never freeze the editor.
@@ -62,7 +66,7 @@ word-level intra-line highlights and chunk navigation.
 
 ## Roadmap
 
-- Local Changes tree view grouped by directory.
+- Three-way merge of conflicts.
 
 ## Development
 

@@ -147,13 +147,18 @@ Prima delle nuove feature: problemi trovati in review, tutti lato host.
 - [ ] Verifica in F5 di Find / Ctrl+G dentro regioni nascoste (nell'harness
       le combinazioni con Ctrl non arrivano a Monaco)
 
-## 🔲 Fase 5 — Albero "Local Changes"
+## ✅ Fase 5 — Albero "Local Changes" (fatto)
 
-`TreeDataProvider` su `repo.state.workingTreeChanges` / `indexChanges`,
-raggruppato per directory come la tool window Commit di WebStorm; ogni item
-invoca `flowDiff.openDiff`. Pura aggiunta: `gitService` espone già stato ed
-eventi. Si sovrappone alla vista SCM nativa, quindi dopo la navigazione.
-Decidere: vista dedicata in activity bar vs sezione nella vista SCM.
+- [x] Vista `flowDiff.localChanges` come sezione della Source Control (scelta:
+      niente icona nuova in activity bar, sta dove si cercano già le modifiche)
+- [x] Gruppi Staged Changes / Changes (incl. conflitti) / Unversioned Files,
+      file raggruppati per cartella con cartelle compattate
+      (`tree/pathTree.ts`, puro e testato); un nodo per repo se sono più d'uno
+- [x] Click su file → Flow Diff (worktree o index secondo il gruppo); icone e
+      decorazioni di stato dal tema e dalla git extension (`resourceUri`)
+- [x] Azioni inline e da menu su file, cartelle e gruppi, anche multi-
+      selezione: Stage, Unstage, Discard (conferma), Open File, Compare with…
+- [ ] Verifica in F5
 
 ## 🔲 Lontano
 

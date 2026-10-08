@@ -239,7 +239,7 @@ function compare(a: string, b: string): number {
   return a.localeCompare(b, undefined, { sensitivity: 'base', numeric: true });
 }
 
-/** Accepts a Uri, an SCM resource state, or nothing (→ active editor). */
+/** Accepts a Uri, an SCM resource state, a Local Changes node, or nothing (→ active editor). */
 function resolveUri(resource: unknown): vscode.Uri | undefined {
   if (resource instanceof vscode.Uri) {
     return resource;
@@ -247,6 +247,11 @@ function resolveUri(resource: unknown): vscode.Uri | undefined {
   const state = resource as vscode.SourceControlResourceState | undefined;
   if (state?.resourceUri instanceof vscode.Uri) {
     return state.resourceUri;
+  }
+  // a file node of the Local Changes tree
+  const node = resource as { change?: { uri?: unknown } } | undefined;
+  if (node?.change?.uri instanceof vscode.Uri) {
+    return node.change.uri;
   }
   const active = vscode.window.activeTextEditor?.document.uri;
   return active?.scheme === 'file' ? active : undefined;

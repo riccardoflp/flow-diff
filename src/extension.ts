@@ -5,6 +5,8 @@ import { diffEngine } from './diffBuilder';
 import { GitService } from './git/gitService';
 import { PanelRegistry } from './panel/panelRegistry';
 import { ThemeService } from './theme/themeService';
+import { LocalChangesProvider } from './tree/localChanges';
+import { registerTreeCommands } from './tree/treeCommands';
 import { DiffTakeover } from './watch/diffTakeover';
 import { Refresher } from './watch/refresher';
 
@@ -17,11 +19,18 @@ export function activate(context: vscode.ExtensionContext): void {
     navigateFile: (panel, direction) => void openAdjacentFile(git, registry, panel, direction),
   });
   const refresher = new Refresher(git, registry);
+  const localChanges = new LocalChangesProvider(git);
 
   context.subscriptions.push(
     registry,
     refresher,
     diffEngine,
+    localChanges,
+    vscode.window.createTreeView('flowDiff.localChanges', {
+      treeDataProvider: localChanges,
+      showCollapseAll: true,
+      canSelectMany: true,
+    }),
     new DiffTakeover(),
     vscode.window.onDidChangeActiveColorTheme(() => {
       for (const panel of registry.all()) {
@@ -37,7 +46,9 @@ export function activate(context: vscode.ExtensionContext): void {
     })
   );
   registerCommands(context, git, registry);
+  registerTreeCommands(context);
   void refresher.init();
+  void localChanges.init();
 }
 
 export function deactivate(): void {}

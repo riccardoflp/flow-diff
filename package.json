@@ -82,6 +82,30 @@
         "title": "Discard Changes (Revert File)",
         "category": "Flow Diff",
         "icon": "$(discard)"
+      },
+      {
+        "command": "flowDiff.tree.stage",
+        "title": "Stage",
+        "category": "Flow Diff",
+        "icon": "$(add)"
+      },
+      {
+        "command": "flowDiff.tree.unstage",
+        "title": "Unstage",
+        "category": "Flow Diff",
+        "icon": "$(remove)"
+      },
+      {
+        "command": "flowDiff.tree.discard",
+        "title": "Discard Changes",
+        "category": "Flow Diff",
+        "icon": "$(discard)"
+      },
+      {
+        "command": "flowDiff.tree.openFile",
+        "title": "Open File",
+        "category": "Flow Diff",
+        "icon": "$(go-to-file)"
       }
     ],
     "menus": {
@@ -168,6 +192,22 @@
         {
           "command": "flowDiff.revertFile",
           "when": "activeWebviewPanelId == flowDiff.panel && flowDiff.activeSide == worktree"
+        },
+        {
+          "command": "flowDiff.tree.stage",
+          "when": "false"
+        },
+        {
+          "command": "flowDiff.tree.unstage",
+          "when": "false"
+        },
+        {
+          "command": "flowDiff.tree.discard",
+          "when": "false"
+        },
+        {
+          "command": "flowDiff.tree.openFile",
+          "when": "false"
         }
       ],
       "explorer/context": [
@@ -182,6 +222,53 @@
           "command": "flowDiff.compareWith",
           "when": "config.git.enabled && resourceScheme == file",
           "group": "3_compare@9"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "flowDiff.tree.openFile",
+          "when": "view == flowDiff.localChanges && viewItem =~ /^file-/",
+          "group": "inline@1"
+        },
+        {
+          "command": "flowDiff.tree.discard",
+          "when": "view == flowDiff.localChanges && viewItem =~ /^(file|dir|group)-(changes|untracked)$/",
+          "group": "inline@2"
+        },
+        {
+          "command": "flowDiff.tree.stage",
+          "when": "view == flowDiff.localChanges && viewItem =~ /^(file|dir|group)-(changes|untracked)$/",
+          "group": "inline@3"
+        },
+        {
+          "command": "flowDiff.tree.unstage",
+          "when": "view == flowDiff.localChanges && viewItem =~ /^(file|dir|group)-staged$/",
+          "group": "inline@3"
+        },
+        {
+          "command": "flowDiff.tree.openFile",
+          "when": "view == flowDiff.localChanges && viewItem =~ /^file-/",
+          "group": "1_open@1"
+        },
+        {
+          "command": "flowDiff.compareWith",
+          "when": "view == flowDiff.localChanges && viewItem =~ /^file-/",
+          "group": "1_open@2"
+        },
+        {
+          "command": "flowDiff.tree.stage",
+          "when": "view == flowDiff.localChanges && viewItem =~ /^(file|dir|group)-(changes|untracked)$/",
+          "group": "2_git@1"
+        },
+        {
+          "command": "flowDiff.tree.unstage",
+          "when": "view == flowDiff.localChanges && viewItem =~ /^(file|dir|group)-staged$/",
+          "group": "2_git@1"
+        },
+        {
+          "command": "flowDiff.tree.discard",
+          "when": "view == flowDiff.localChanges && viewItem =~ /^(file|dir|group)-(changes|untracked)$/",
+          "group": "2_git@2"
         }
       ]
     },
@@ -211,7 +298,16 @@
         "key": "shift+f7",
         "when": "activeWebviewPanelId == flowDiff.panel"
       }
-    ]
+    ],
+    "views": {
+      "scm": [
+        {
+          "id": "flowDiff.localChanges",
+          "name": "Local Changes",
+          "when": "config.git.enabled"
+        }
+      ]
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
