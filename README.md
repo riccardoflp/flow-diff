@@ -1,8 +1,8 @@
 # Flow Diff
 
-WebStorm-style side-by-side git diff viewer for VS Code: aligned panes with
-filler lines, curved connectors in the center gutter linking changed blocks,
-word-level intra-line highlights and chunk navigation.
+Side-by-side git diff viewer for VS Code: aligned panes with filler lines,
+curved connectors in the center gutter linking changed blocks, word-level
+intra-line highlights and chunk navigation.
 
 ## Features
 
@@ -11,7 +11,7 @@ word-level intra-line highlights and chunk navigation.
 - **Compare with any branch, tag or commit**: pick from a list (including the
   commits that touched the file) or type any revision, like `HEAD~3`.
 - **Aligned panes**: changed blocks stay vertically aligned via hatched filler
-  lines, exactly like WebStorm's diff viewer.
+  lines.
 - **Center-gutter connectors**: colored bands link each changed block on the
   left to its counterpart on the right (green = added, red = removed,
   blue = modified).
@@ -21,7 +21,7 @@ word-level intra-line highlights and chunk navigation.
   anchored at chunk boundaries — context scrolls 1:1, and while traversing a
   large change the shorter side keeps its counterpart near mid-screen, with
   context visible above and below.
-- **Chunk navigation**: `F7` / `Shift+F7` (like WebStorm) or the floating
+- **Chunk navigation**: `F7` / `Shift+F7` or the floating
   toolbar, with a "n / m" counter; chunk markers in the overview ruler and
   minimap. Past the last change, `F7` again moves on to the next changed
   file.
@@ -42,10 +42,9 @@ word-level intra-line highlights and chunk navigation.
   into the real document (kept dirty); `Ctrl+S` inside the diff saves.
 - **Syntax highlighting** that matches your *actual* color theme: the active
   theme's JSON is resolved host-side (includes merged) and loaded into shiki.
-- **Local Changes tree** in the Source Control view, like WebStorm's Commit
-  window: staged, unstaged and unversioned files grouped by folder; click to
-  open the diff, inline stage / unstage / discard on files, folders or whole
-  groups.
+- **Local Changes tree** in the Source Control view: staged, unstaged and
+  unversioned files grouped by folder; click to open the diff, inline stage /
+  unstage / discard on files, folders or whole groups.
 - **Live refresh**: the diff updates in place as you edit and save, or as the
   git state changes. Diffs are computed on a background thread, so even huge
   files never freeze the editor.

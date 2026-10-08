@@ -4,7 +4,7 @@ Guida operativa per agenti (e umani) che lavorano su questo repo.
 
 ## Cos'è
 
-Estensione VS Code: diff git side-by-side stile WebStorm in una webview custom.
+Estensione VS Code: diff git side-by-side in una webview custom.
 Due editor **Monaco** (destro editabile) collegati da un gutter centrale con
 connettori SVG "genie" e azioni per chunk (revert / stage / unstage).
 

@@ -21,10 +21,9 @@ export type ChangeNode =
   | { kind: 'file'; repo: Repository; group: ChangeGroup; change: Change };
 
 /**
- * "Local Changes" in the Source Control view, like WebStorm's Commit tool
- * window: staged, unstaged and unversioned files grouped by directory.
- * Clicking a file opens its Flow Diff; inline actions stage, unstage and
- * discard. Repositories get their own top-level node when there are several.
+ * "Local Changes" in the Source Control view: staged, unstaged and
+ * unversioned files grouped by directory. Clicking a file opens its Flow
+ * Diff; inline actions stage, unstage and discard. Repositories get their own top-level node when there are several.
  */
 export class LocalChangesProvider implements vscode.TreeDataProvider<ChangeNode>, vscode.Disposable {
   private readonly emitter = new vscode.EventEmitter<void>();

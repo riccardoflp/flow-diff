@@ -13,8 +13,7 @@
   from the HEAD pane.
 - Compare with any branch, tag or commit (`Flow Diff: Compare with Branch or
   Revision…`), or a typed revision such as `HEAD~3`. Against a revision other
-  than `HEAD`, chunks offer revert only and are never marked as staged (this
-  also fixes diffs opened from GitLens).
+  than `HEAD`, chunks offer revert only and are never marked as staged.
 - Chunk stage/unstage works on partially staged files, keeps the index's line
   endings and handles files without a final newline.
 - Diffs are computed on a background thread with a time limit; only the
@@ -30,7 +29,7 @@
 First public release.
 
 - Side-by-side git diff (working tree vs HEAD, index vs HEAD) in a custom
-  webview, with WebStorm-style aligned panes and hatched filler lines.
+  webview, with aligned panes and hatched filler lines.
   Changed lines tint their line numbers too.
 - Center-gutter SVG connectors linking changed blocks, colored by kind
   (added / removed / modified).

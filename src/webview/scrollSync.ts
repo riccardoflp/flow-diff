@@ -22,7 +22,7 @@ export function sideExtent(editor: Editor, start: number, count: number): [numbe
 /**
  * Keeps the two Monaco editors' vertical scroll positions in sync through a
  * piecewise linear mapping anchored at chunk boundaries: context regions
- * scroll 1:1, changed regions of different heights stretch (WebStorm-style).
+ * scroll 1:1, changed regions of different heights stretch.
  *
  * The mapping is applied to the viewport *center*, not the top edge. While
  * traversing a chunk much taller on one side, the shorter side then keeps its

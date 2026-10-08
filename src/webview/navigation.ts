@@ -14,8 +14,7 @@ export interface NavigationHooks {
 /**
  * Tracks the current chunk index. With file jumps enabled, stepping past the
  * last (or before the first) chunk first shows a hint and moves on to the
- * adjacent changed file on the second press, like WebStorm; otherwise it
- * wraps around.
+ * adjacent changed file on the second press; otherwise it wraps around.
  */
 export class Navigation {
   private current = -1;

@@ -25,7 +25,7 @@ export class DiffTooComplexError extends Error {
 
 /**
  * When more than this fraction of both lines changed, intra-line highlights
- * are noise rather than signal, so they are skipped (WebStorm does the same).
+ * are noise rather than signal, so they are skipped.
  */
 const INTRA_LINE_SKIP_RATIO = 0.65;
 

@@ -235,7 +235,7 @@ function wireKeys(eds: DiffEditors): void {
   for (const editor of [eds.left, eds.right]) {
     editor.addCommand(monaco.KeyCode.F7, () => navigation.next());
     editor.addCommand(monaco.KeyMod.Shift | monaco.KeyCode.F7, () => navigation.prev());
-    // F4, like WebStorm: open the real file at the cursor
+    // F4: open the real file at the cursor
     editor.addAction({
       id: 'flowDiff.jumpToSource',
       label: 'Jump to Source',

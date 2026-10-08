@@ -153,7 +153,7 @@ async function compareWith(git: GitService, registry: PanelRegistry, resource: u
 
 /**
  * Opens a read-only two-ref diff, or a custom-leftRef vs worktree diff when
- * rightRef is omitted. Called by DiffTakeover for GitLens-originated tabs.
+ * rightRef is omitted. Called by DiffTakeover for commit-history tabs.
  */
 async function openDiffAtRefs(
   git: GitService,

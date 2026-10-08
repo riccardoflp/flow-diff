@@ -4,7 +4,7 @@ Roadmap di progetto. Stato aggiornato all'8 ottobre 2026.
 
 ## Visione
 
-Replicare in VS Code l'esperienza diff di WebStorm: side-by-side con connettori
+Un'esperienza diff completa in VS Code: side-by-side con connettori
 "genie" nel gutter centrale, editing in-place, azioni per chunk, albero delle
 modifiche locali e compare-with arbitrario.
 
@@ -46,16 +46,10 @@ modifiche locali e compare-with arbitrario.
 - [x] `watch/diffTakeover.ts`: i tab diff git nativi vengono chiusi e sostituiti
       da Flow Diff (setting `flowDiff.interceptGitOpenChange`, default on)
 
-## 🚀 Release 0.1.0 (in corso — ripresa 8 ottobre 2026)
+## ✅ Release 0.1.0 (uscita)
 
-Prima release pubblica. Contenuto: fasi 1–2.6 complete. Il tag `v0.1.0`
-creato a giugno è solo locale, mai pushato, e precede il rename
-Bridge Diff → Flow Diff: va ricreato sul commit di release.
+Prima release pubblica: fasi 1–2.6. Dopo la release:
 
-- [x] `package.json`: version 0.1.0, publisher, repository, icona, LICENSE
-- [x] README rivisto (feature list aggiornata, niente feature inesistenti)
-- [x] CHANGELOG.md (il marketplace lo mostra nella tab Changelog)
-- [x] `npm test` verde, `npx vsce package` pulito
 - [x] Numeri di riga colorati come la modifica (`marginClassName`)
 - [x] `bundle:webview` svuota `out/webview` prima di esbuild: le build
       incrementali lasciavano chunk con hash vecchi che finivano nel `.vsix`
@@ -64,20 +58,26 @@ Bridge Diff → Flow Diff: va ricreato sul commit di release.
 - [x] Workflow di release su tag `v*`: test, package, publish su VS Code
       Marketplace (`VSCE_PAT`) e Open VSX (`OVSX_PAT`), `.vsix` allegato alla
       GitHub Release
-- [ ] Rinominare il repo GitHub `bridge-diff` → `flow-diff` (il
-      `repository` nel package.json punta già lì) e aggiornare il remote
-- [ ] Shortcut tastiera nella webview (Ctrl+C/V/X/Z/F…): l'handler WIP
-      intercetta in capture e chiama `execCommand`, ma il pre-script delle
-      webview di VS Code inoltra comunque il keydown al workbench, che
-      ri-esegue copy/paste → rischio di doppio incolla. Verificare in F5
-      quali shortcut sono davvero rotti e intercettare solo quelli
-      (`stopPropagation` per non farli rimbalzare al workbench)
+- [x] Repo GitHub rinominato in `flow-diff`, remote aggiornato
+
+## 🔲 Prossima release (0.2.0)
+
+Contenuto: fasi R, 3, 4, 5 (sezione "Unreleased" del CHANGELOG).
+
+- [ ] Shortcut tastiera nella webview (Ctrl+C/V/X/Z/Y/A/F/H/G/S, Ctrl+D…):
+      tutte da verificare in F5. L'handler WIP intercetta in capture e chiama
+      `execCommand`, ma il pre-script delle webview di VS Code fa già
+      preventDefault su undo/redo/find e copy/paste/cut e inoltra il keydown
+      al workbench → rischio di doppia esecuzione (es. doppio incolla).
+      Provare ogni shortcut prima senza handler, poi intercettare solo quelle
+      davvero rotte (`stopPropagation` per non farle rimbalzare al workbench)
+- [ ] Verifiche F5 delle fasi 3–5 (vedi sotto)
 - [ ] Secret `VSCE_PAT` (Azure DevOps, scope Marketplace › Manage) e
       `OVSX_PAT` (open-vsx.org, namespace `RiccardoFilippozzi`) nel repo
-- [ ] Data in CHANGELOG, tag `v0.1.0` sul commit di release in `main`, push
-      del tag → parte il workflow di release
+- [ ] Version bump in `package.json`, data nel CHANGELOG, tag `v0.2.0` su
+      `main`, push del tag → parte il workflow di release
 
-## ✅ Fase R — Robustezza (0.2, fatto)
+## ✅ Fase R — Robustezza (fatto)
 
 Prima delle nuove feature: problemi trovati in review, tutti lato host.
 
@@ -118,7 +118,7 @@ Prima delle nuove feature: problemi trovati in review, tutti lato host.
       `getCommit`). Apre `(ref, worktree)` con la pipeline esistente
 - [x] Entry point: palette, context menu Explorer / SCM / tab editor, menu `…`
       del pannello Flow Diff (usa il file del pannello)
-- [x] Contro un ref ≠ HEAD (anche dal takeover GitLens): niente marcatura
+- [x] Contro un ref ≠ HEAD: niente marcatura
       staged né stage/unstage, solo revert del chunk; context
       `flowDiff.activeSide = worktreeVsRef` nasconde Stage/Discard file
 - [x] Label: hash abbreviati a 8, nomi di branch/tag interi
@@ -169,6 +169,6 @@ Prima delle nuove feature: problemi trovati in review, tutti lato host.
 
 F5 → aprire `../bridge-diff-playground` → diff di `sample.ts` (4 chunk: word
 edit, insert, delete, blocco 1→3), `untracked.ts` (tutto added), `staged.ts`
-(MM: confrontare le due viste). Temi: Osmium, Dark+, Light+, High Contrast.
+(MM: confrontare le due viste). Temi: Dark+, Light+, High Contrast e un tema custom.
 Unit test: `npm test` (motore diff, patch con round-trip su git reale,
 worker, edit minimi, scroll map).
