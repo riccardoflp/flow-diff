@@ -48,8 +48,10 @@ word-level intra-line highlights and chunk navigation.
 
 ## Roadmap
 
-- Local Changes tree view grouped by directory.
 - Compare with arbitrary branch/revision.
+- Collapsible unchanged regions; `F7` past the last change jumps to the next
+  changed file.
+- Local Changes tree view grouped by directory.
 
 ## Development
 
@@ -62,3 +64,7 @@ npm test             # unit tests for the diff engine (node --test)
 Press `F5` to launch the Extension Development Host. A playground repo with
 edits covering every diff case can be generated alongside this project
 (`bridge-diff-playground`).
+
+CI runs the tests on Linux and Windows for every push and PR. Pushing a tag
+`vX.Y.Z` (matching `package.json`) publishes to the VS Code Marketplace and
+Open VSX and attaches the `.vsix` to a GitHub Release.

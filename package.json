@@ -181,7 +181,7 @@
   "scripts": {
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./ && tsc -p src/webview && npm run bundle:webview",
-    "bundle:webview": "esbuild src/webview/main.ts --bundle --outdir=out/webview --format=esm --splitting --chunk-names=chunks/[name]-[hash] --loader:.ttf=file --sourcemap && esbuild node_modules/monaco-editor/esm/vs/editor/editor.worker.js --bundle --format=iife --outfile=out/webview/editor.worker.js --minify",
+    "bundle:webview": "node -e \"require('fs').rmSync('out/webview',{recursive:true,force:true})\" && esbuild src/webview/main.ts --bundle --outdir=out/webview --format=esm --splitting --chunk-names=chunks/[name]-[hash] --loader:.ttf=file --sourcemap && esbuild node_modules/monaco-editor/esm/vs/editor/editor.worker.js --bundle --format=iife --outfile=out/webview/editor.worker.js --minify",
     "watch": "tsc -watch -p ./",
     "watch:webview": "esbuild src/webview/main.ts --bundle --outdir=out/webview --format=esm --splitting --chunk-names=chunks/[name]-[hash] --loader:.ttf=file --sourcemap --watch",
     "test": "npm run compile && node --test \"out/test/**/*.test.js\"",
@@ -201,6 +201,7 @@
     "@vscode/vsce": "^3.0.0",
     "esbuild": "^0.24.0",
     "monaco-editor": "^0.55.1",
+    "ovsx": "^1.2.0",
     "shiki": "^4.2.0",
     "typescript": "^5.4.0"
   }

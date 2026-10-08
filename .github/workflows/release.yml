@@ -1,0 +1,56 @@
+name: Release
+
+# Push a tag `vX.Y.Z` matching package.json's version to publish.
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      VSCE_PAT: ${{ secrets.VSCE_PAT }}
+      OVSX_PAT: ${{ secrets.OVSX_PAT }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+
+      - name: Check tag matches package.json version
+        run: |
+          version=$(node -p "require('./package.json').version")
+          if [ "v$version" != "$GITHUB_REF_NAME" ]; then
+            echo "::error::tag $GITHUB_REF_NAME does not match package.json version $version"
+            exit 1
+          fi
+          echo "VSIX=flow-diff-$version.vsix" >> "$GITHUB_ENV"
+
+      - run: npm test
+      - run: npx vsce package --out "$VSIX"
+
+      # Each registry is skipped (with a notice) until its secret is configured.
+      - name: Publish to VS Code Marketplace
+        run: |
+          if [ -z "$VSCE_PAT" ]; then
+            echo "::notice::VSCE_PAT not set, skipping VS Code Marketplace"
+          else
+            npx vsce publish --packagePath "$VSIX"
+          fi
+      - name: Publish to Open VSX
+        run: |
+          if [ -z "$OVSX_PAT" ]; then
+            echo "::notice::OVSX_PAT not set, skipping Open VSX"
+          else
+            npx ovsx publish "$VSIX"
+          fi
+
+      - name: GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" "$VSIX" --title "$GITHUB_REF_NAME" --generate-notes

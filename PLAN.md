@@ -1,6 +1,6 @@
 # PLAN.md — Flow Diff
 
-Roadmap di progetto. Stato aggiornato al 12 giugno 2026.
+Roadmap di progetto. Stato aggiornato all'8 ottobre 2026.
 
 ## Visione
 
@@ -46,38 +46,90 @@ modifiche locali e compare-with arbitrario.
 - [x] `watch/diffTakeover.ts`: i tab diff git nativi vengono chiusi e sostituiti
       da Flow Diff (setting `flowDiff.interceptGitOpenChange`, default on)
 
-## 🔲 Fase 3 — Albero "Local Changes"
+## 🚀 Release 0.1.0 (in corso — ripresa 8 ottobre 2026)
 
-`TreeDataProvider` su `repo.state.workingTreeChanges` / `indexChanges`,
-raggruppato per directory come la tool window Commit di WebStorm; ogni item
-invoca `flowDiff.openDiff`. Pura aggiunta: `gitService` espone già stato ed
-eventi. Decidere: vista dedicata in activity bar vs sezione nella vista SCM.
-
-## 🔲 Fase 4 — Compare with branch / revision
-
-QuickPick su `repo.state.refs` + `repo.log()` → pipeline esistente con
-`(ref, worktree)`. `gitService.getContent` è già parametrizzato per ref e la
-chiave del registry include già i ref. Nascondere stage/revert quando il lato
-destro non è il worktree (flag già in `init.settings`).
-
-## 🚀 Release 0.1.0 (in corso — 12 giugno 2026)
-
-Prima release pubblica. Contenuto: fasi 1–2.6 complete.
+Prima release pubblica. Contenuto: fasi 1–2.6 complete. Il tag `v0.1.0`
+creato a giugno è solo locale, mai pushato, e precede il rename
+Bridge Diff → Flow Diff: va ricreato sul commit di release.
 
 - [x] `package.json`: version 0.1.0, publisher, repository, icona, LICENSE
 - [x] README rivisto (feature list aggiornata, niente feature inesistenti)
 - [x] CHANGELOG.md (il marketplace lo mostra nella tab Changelog)
 - [x] `npm test` verde, `npx vsce package` pulito
-- [ ] Tag `v0.1.0` pushato + `npx vsce publish` (richiede PAT Azure DevOps)
+- [x] Numeri di riga colorati come la modifica (`marginClassName`)
+- [x] `bundle:webview` svuota `out/webview` prima di esbuild: le build
+      incrementali lasciavano chunk con hash vecchi che finivano nel `.vsix`
+- [x] CI GitHub Actions: `npm test` (Linux + Windows) + `vsce package` su
+      push/PR
+- [x] Workflow di release su tag `v*`: test, package, publish su VS Code
+      Marketplace (`VSCE_PAT`) e Open VSX (`OVSX_PAT`), `.vsix` allegato alla
+      GitHub Release
+- [ ] Rinominare il repo GitHub `bridge-diff` → `flow-diff` (il
+      `repository` nel package.json punta già lì) e aggiornare il remote
+- [ ] Shortcut tastiera nella webview (Ctrl+C/V/X/Z/F…): l'handler WIP
+      intercetta in capture e chiama `execCommand`, ma il pre-script delle
+      webview di VS Code inoltra comunque il keydown al workbench, che
+      ri-esegue copy/paste → rischio di doppio incolla. Verificare in F5
+      quali shortcut sono davvero rotti e intercettare solo quelli
+      (`stopPropagation` per non farli rimbalzare al workbench)
+- [ ] Secret `VSCE_PAT` (Azure DevOps, scope Marketplace › Manage) e
+      `OVSX_PAT` (open-vsx.org, namespace `RiccardoFilippozzi`) nel repo
+- [ ] Data in CHANGELOG, tag `v0.1.0` sul commit di release in `main`, push
+      del tag → parte il workflow di release
 
-## 🔲 Backlog / idee
+## 🔲 Fase R — Robustezza (0.2)
+
+Prima delle nuove feature: problemi trovati in review, tutti lato host.
+
+- [ ] **Guard file enormi anche nel refresh**: oggi il limite di
+      `diffBuilder` vale solo per `interactive`; accettato un file da 100k+
+      righe, ogni refresh (250ms durante il typing) ricalcola il diff O(N·M)
+      sul thread dell'extension host. Spostare `computeDiff` in un
+      worker_thread e/o saltare i refresh oltre soglia
+- [ ] **Edit sync incrementale**: la webview manda l'intero testo ogni
+      200ms e l'host sostituisce tutto il documento. Inviare i delta di
+      `onDidChangeModelContent` e applicarli come edit minimi (undo stack e
+      cursori degli altri editor intatti, costo O(modifica))
+- [ ] **Stage su file parzialmente staged**: costruire la patch di stage da
+      index↔worktree (non HEAD↔worktree) e quella di unstage da HEAD↔index;
+      elimina il limite noto della fase 2
+- [ ] **Refresh mirato**: su `repo.state.onDidChange` ricalcolare solo i
+      pannelli il cui contenuto è cambiato (hash dei tre lati) invece di
+      tutti in sequenza
+- [ ] **Encoding**: oggi solo UTF-8 (UTF-16 ha `\0` → scambiato per binario).
+      Rispettare `files.encoding` / BOM
+- [ ] Test unitari della mappa di `scrollSync` (matematica pura, estraibile)
+
+## 🔲 Fase 3 — Compare with branch / revision
+
+QuickPick su `repo.state.refs` + `repo.log()` → pipeline esistente con
+`(ref, worktree)`. `gitService.getContent` è già parametrizzato per ref e la
+chiave del registry include già i ref. Nascondere stage/revert quando il lato
+destro non è il worktree (flag già in `init.settings`). Prima delle altre
+perché l'infrastruttura c'è già quasi tutta.
+
+## 🔲 Fase 4 — Navigazione e lettura
 
 - [ ] Collapse delle regioni invariate (i connettori bezier sono già pronti
       per geometrie non allineate)
-- [ ] Word-wrap opzionale (`settings.wrap` già nel protocollo)
+- [ ] F7 oltre l'ultimo chunk → file modificato successivo (come WebStorm):
+      si attraversa tutto il changeset senza uscire dal diff
 - [ ] "n of m" nel titolo del pannello (`currentChunkChanged` già emesso)
-- [ ] Merge conflict 3-way (fase lontana, richiede layout a 3 pannelli)
+- [ ] Word-wrap opzionale (`settings.wrap` già nel protocollo)
 - [ ] Double-click su una riga per aprirla nell'editor vero
+
+## 🔲 Fase 5 — Albero "Local Changes"
+
+`TreeDataProvider` su `repo.state.workingTreeChanges` / `indexChanges`,
+raggruppato per directory come la tool window Commit di WebStorm; ogni item
+invoca `flowDiff.openDiff`. Pura aggiunta: `gitService` espone già stato ed
+eventi. Si sovrappone alla vista SCM nativa, quindi dopo la navigazione.
+Decidere: vista dedicata in activity bar vs sezione nella vista SCM.
+
+## 🔲 Lontano
+
+- [ ] Merge conflict 3-way (layout a 3 pannelli): il vero differenziatore,
+      ma è un progetto a sé
 
 ## Verifica standard
 

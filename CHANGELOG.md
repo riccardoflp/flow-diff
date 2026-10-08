@@ -6,6 +6,7 @@ First public release.
 
 - Side-by-side git diff (working tree vs HEAD, index vs HEAD) in a custom
   webview, with WebStorm-style aligned panes and hatched filler lines.
+  Changed lines tint their line numbers too.
 - Center-gutter SVG connectors linking changed blocks, colored by kind
   (added / removed / modified).
 - Word-level intra-line highlights with a noise guard for fully-rewritten
