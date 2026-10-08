@@ -121,11 +121,14 @@ export function buildDiffDecorations(
     // staged chunks render dimmed so pending work stands out
     const staged = row.chunkId !== undefined && model.chunks[row.chunkId]?.staged === true;
     const line = cell.lineNumber;
+    const lineClass = `bd-line-${cell.kind}${staged ? ' bd-staged' : ''}`;
     decorations.push({
       range: new monaco.Range(line, 1, line, 1),
       options: {
         isWholeLine: true,
-        className: `bd-line-${cell.kind}${staged ? ' bd-staged' : ''}`,
+        className: lineClass,
+        // the line numbers share the change color, like VS Code's diff editor
+        marginClassName: lineClass,
       },
     });
     for (const [start, end] of cell.highlights ?? []) {
@@ -149,13 +152,15 @@ export function buildDiffDecorations(
     // 0 meaning a change before the first line
     const edge = start === 0 ? 'top' : 'bottom';
     const line = Math.max(1, start);
+    const dividerClass = `bd-divider-${edge} bd-divider-${chunk.kind}${
+      chunk.staged ? ' bd-divider-staged' : ''
+    }`;
     decorations.push({
       range: new monaco.Range(line, 1, line, 1),
       options: {
         isWholeLine: true,
-        className: `bd-divider-${edge} bd-divider-${chunk.kind}${
-          chunk.staged ? ' bd-divider-staged' : ''
-        }`,
+        className: dividerClass,
+        marginClassName: dividerClass,
       },
     });
   }
