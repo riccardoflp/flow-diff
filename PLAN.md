@@ -77,7 +77,7 @@ Bridge Diff → Flow Diff: va ricreato sul commit di release.
 - [ ] Data in CHANGELOG, tag `v0.1.0` sul commit di release in `main`, push
       del tag → parte il workflow di release
 
-## 🔲 Fase R — Robustezza (0.2)
+## ✅ Fase R — Robustezza (0.2, fatto)
 
 Prima delle nuove feature: problemi trovati in review, tutti lato host.
 
@@ -108,7 +108,7 @@ Prima delle nuove feature: problemi trovati in review, tutti lato host.
       l'index) se il file non è UTF-8 e la patch ha byte non ASCII, o se tocca
       la riga 1 di un file con BOM. UTF-16: la git extension non sniffa il
       BOM senza `files.autoGuessEncoding` → resta "looks binary"
-- [ ] Test unitari della mappa di `scrollSync` (matematica pura, estraibile)
+- [x] Mappa di `scrollSync` estratta in `diff/scrollMap.ts` (pura) e testata
 
 ## 🔲 Fase 3 — Compare with branch / revision
 
@@ -146,4 +146,5 @@ Decidere: vista dedicata in activity bar vs sezione nella vista SCM.
 F5 → aprire `../bridge-diff-playground` → diff di `sample.ts` (4 chunk: word
 edit, insert, delete, blocco 1→3), `untracked.ts` (tutto added), `staged.ts`
 (MM: confrontare le due viste). Temi: Osmium, Dark+, Light+, High Contrast.
-Unit test: `npm test` (computeDiff + patch).
+Unit test: `npm test` (motore diff, patch con round-trip su git reale,
+worker, edit minimi, scroll map).

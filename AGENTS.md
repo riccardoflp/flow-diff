@@ -12,7 +12,7 @@ connettori SVG "genie" e azioni per chunk (revert / stage / unstage).
 
 ```bash
 npm run compile        # tsc host + type-check webview + esbuild bundle + worker
-npm test               # compile + node --test (unit test su computeDiff e patch)
+npm test               # compile + node --test (diff, patch su git reale, worker…)
 npm run watch          # tsc -watch (solo host)
 npm run watch:webview  # esbuild --watch (solo bundle webview)
 npx vsce package       # genera il .vsix
@@ -43,6 +43,7 @@ src/
 │   ├── chunkPatch.ts       # stage/unstage chunk → patch forward sull'index
 │   ├── patch.ts            # hunk → patch unified zero-context per git apply
 │   ├── textEdit.ts         # sostituzione minima (edit dalla webview → documento)
+│   ├── scrollMap.ts        # mappa piecewise-linear dello scroll sync
 │   └── protocol.ts         # messaggi host⇄webview (condiviso, niente vscode)
 ├── git/
 │   ├── api.d.ts            # typings vendorate dal tag release/1.90 di vscode

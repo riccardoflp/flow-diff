@@ -1,5 +1,6 @@
 import type * as monaco from 'monaco-editor/esm/vs/editor/editor.api.js';
 import { AlignedDiffModel } from '../diff/model';
+import { buildAnchors, mapPosition, ScrollAnchors } from '../diff/scrollMap';
 
 type Editor = monaco.editor.IStandaloneCodeEditor;
 
@@ -33,8 +34,7 @@ export class ScrollSync {
   private left: Editor | undefined;
   private right: Editor | undefined;
   private model: AlignedDiffModel | undefined;
-  private anchorsLeft: number[] = [0];
-  private anchorsRight: number[] = [0];
+  private anchors: ScrollAnchors = buildAnchors([]);
   /** Suppresses feedback loops: scroll positions we set programmatically. */
   private readonly expected = new Map<Editor, number>();
   private listeners: monaco.IDisposable[] = [];
@@ -77,29 +77,21 @@ export class ScrollSync {
     if (!left || !right || !model) {
       return;
     }
-    const anchorsLeft = [0];
-    const anchorsRight = [0];
-    const push = (l: number, r: number) => {
-      // keep both sequences monotonic so the interpolation stays well-defined
-      anchorsLeft.push(Math.max(l, anchorsLeft[anchorsLeft.length - 1]));
-      anchorsRight.push(Math.max(r, anchorsRight[anchorsRight.length - 1]));
-    };
+    const pairs: Array<[number, number]> = [];
     for (const chunk of model.chunks) {
       const [lt, lb] = sideExtent(left, chunk.leftStart, chunk.leftCount);
       const [rt, rb] = sideExtent(right, chunk.rightStart, chunk.rightCount);
-      push(lt, rt);
-      push(lb, rb);
+      pairs.push([lt, rt], [lb, rb]);
     }
     const leftModel = left.getModel();
     const rightModel = right.getModel();
     if (leftModel && rightModel) {
-      push(
+      pairs.push([
         left.getBottomForLineNumber(leftModel.getLineCount()),
-        right.getBottomForLineNumber(rightModel.getLineCount())
-      );
+        right.getBottomForLineNumber(rightModel.getLineCount()),
+      ]);
     }
-    this.anchorsLeft = anchorsLeft;
-    this.anchorsRight = anchorsRight;
+    this.anchors = buildAnchors(pairs);
   }
 
   /** Scroll one editor without triggering a counter-sync from its scroll event. */
@@ -127,19 +119,7 @@ export class ScrollSync {
   }
 
   private map(y: number, fromLeft: boolean): number {
-    const from = fromLeft ? this.anchorsLeft : this.anchorsRight;
-    const to = fromLeft ? this.anchorsRight : this.anchorsLeft;
-    if (y <= from[0]) {
-      return to[0];
-    }
-    for (let i = 1; i < from.length; i++) {
-      if (y <= from[i]) {
-        const span = from[i] - from[i - 1];
-        const t = span === 0 ? 1 : (y - from[i - 1]) / span;
-        return to[i - 1] + t * (to[i] - to[i - 1]);
-      }
-    }
-    // past the last anchor: continue 1:1
-    return to[to.length - 1] + (y - from[from.length - 1]);
+    const { left, right } = this.anchors;
+    return fromLeft ? mapPosition(y, left, right) : mapPosition(y, right, left);
   }
 }
