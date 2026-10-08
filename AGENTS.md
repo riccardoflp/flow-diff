@@ -42,6 +42,7 @@ src/
 │   ├── staged.ts           # marca i chunk già nell'index
 │   ├── chunkPatch.ts       # stage/unstage chunk → patch forward sull'index
 │   ├── patch.ts            # hunk → patch unified zero-context per git apply
+│   ├── textEdit.ts         # sostituzione minima (edit dalla webview → documento)
 │   └── protocol.ts         # messaggi host⇄webview (condiviso, niente vscode)
 ├── git/
 │   ├── api.d.ts            # typings vendorate dal tag release/1.90 di vscode

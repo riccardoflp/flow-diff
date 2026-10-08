@@ -1,7 +1,9 @@
 import * as path from 'path';
 import * as vscode from 'vscode';
+import { normalizeEol } from '../diff/hunks';
 import { AlignedDiffModel } from '../diff/model';
 import { HostMessage, WebviewMessage } from '../diff/protocol';
+import { minimalReplace, offsetToPosition } from '../diff/textEdit';
 import { ThemeService } from '../theme/themeService';
 
 export interface DiffDescriptor {
@@ -208,17 +210,24 @@ export class DiffPanel {
       return;
     }
     const document = await vscode.workspace.openTextDocument(this.descriptor.fileUri);
-    const current = document.getText();
-    if (current.replace(/\r\n/g, '\n') === text) {
+    // diff in LF space (what the webview works in): line/column positions
+    // are the same whatever the document's EOL
+    const current = normalizeEol(document.getText());
+    const change = minimalReplace(current, text);
+    if (!change) {
       return;
     }
-    // the webview works in LF; preserve the document's EOL style
-    const finalText = document.eol === vscode.EndOfLine.CRLF ? text.replace(/\n/g, '\r\n') : text;
+    // replace only the changed span, so the document's undo history, other
+    // editors' cursors and folding outside it stay untouched
+    const start = offsetToPosition(current, change.start);
+    const end = offsetToPosition(current, change.end);
+    const replacement =
+      document.eol === vscode.EndOfLine.CRLF ? change.text.replace(/\n/g, '\r\n') : change.text;
     const edit = new vscode.WorkspaceEdit();
     edit.replace(
       this.descriptor.fileUri,
-      new vscode.Range(new vscode.Position(0, 0), document.positionAt(current.length)),
-      finalText
+      new vscode.Range(start.line, start.character, end.line, end.character),
+      replacement
     );
     await vscode.workspace.applyEdit(edit);
   }

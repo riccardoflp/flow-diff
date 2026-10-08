@@ -85,10 +85,12 @@ Prima delle nuove feature: problemi trovati in review, tutti lato host.
       `markStagedChunks` girano in un worker_thread (`diffEngine.ts`), con
       timeout jsdiff di 5s → "too many differences" (al refresh resta
       l'ultimo modello buono)
-- [ ] **Edit sync incrementale**: la webview manda l'intero testo ogni
-      200ms e l'host sostituisce tutto il documento. Inviare i delta di
-      `onDidChangeModelContent` e applicarli come edit minimi (undo stack e
-      cursori degli altri editor intatti, costo O(modifica))
+- [x] **Edit sync incrementale**: l'host non sostituisce più tutto il
+      documento ma solo lo span cambiato (prefisso/suffisso comuni,
+      `diff/textEdit.ts`): undo, cursori e folding degli altri editor intatti.
+      Il messaggio porta ancora il testo intero (semplice e auto-correttivo;
+      i delta di Monaco richiederebbero versioning contro le modifiche
+      concorrenti dall'editor normale)
 - [x] **Stage su file parzialmente staged**: `diff/chunkPatch.ts` costruisce
       patch *forward* sull'index esatto (stage: index→worktree, unstage:
       index→HEAD) con i soli hunk che toccano il chunk. Gestisce CRLF
