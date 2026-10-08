@@ -113,7 +113,7 @@ export class ChunkActions {
       count: chunk.rightCount,
     });
     if (patch) {
-      await applyPatchToIndex(panel.descriptor.repoRoot, patch);
+      await applyToIndex(panel, patch);
     }
   }
 
@@ -147,7 +147,7 @@ export class ChunkActions {
       ? unstagePatch(relative, index, head, { start: chunk.rightStart, count: chunk.rightCount }, 'index')
       : unstagePatch(relative, index, head, { start: chunk.leftStart, count: chunk.leftCount }, 'head');
     if (patch) {
-      await applyPatchToIndex(repoRoot, patch);
+      await applyToIndex(panel, patch);
     }
   }
 
@@ -157,6 +157,32 @@ export class ChunkActions {
       throw new Error('no git repository for this file');
     }
     return { repo, relative: path.relative(panel.descriptor.repoRoot, panel.descriptor.fileUri.fsPath) };
+  }
+}
+
+/**
+ * The patch is built from decoded text and reaches git as UTF-8, so it must
+ * mean the same bytes as the file: refuse instead of corrupting the index.
+ */
+async function applyToIndex(panel: DiffPanel, patch: string): Promise<void> {
+  const { fileUri, repoRoot } = panel.descriptor;
+  const encoding = vscode.workspace.getConfiguration('files', fileUri).get<string>('encoding', 'utf8');
+  if (encoding !== 'utf8' && encoding !== 'utf8bom' && /[^\x00-\x7f]/.test(patch)) {
+    throw new Error(`chunk staging needs UTF-8 text, this file is ${encoding} — stage the whole file`);
+  }
+  // git's decoder strips a UTF-8 BOM: a hunk on line 1 would lose or misplace it
+  if (/^@@ -[01],/m.test(patch) && (await startsWithBom(fileUri))) {
+    throw new Error('the first line of a file with a BOM cannot be staged per chunk — stage the whole file');
+  }
+  await applyPatchToIndex(repoRoot, patch);
+}
+
+async function startsWithBom(uri: vscode.Uri): Promise<boolean> {
+  try {
+    const bytes = await vscode.workspace.fs.readFile(uri);
+    return bytes[0] === 0xef && bytes[1] === 0xbb && bytes[2] === 0xbf;
+  } catch {
+    return false;
   }
 }
 

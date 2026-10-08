@@ -101,8 +101,13 @@ Prima delle nuove feature: problemi trovati in review, tutti lato host.
       stato git → solo quelli del repo; hash sha1 degli input per saltare
       diff e postMessage quando nulla è cambiato; run serializzati (niente
       modelli vecchi che arrivano dopo quelli nuovi)
-- [ ] **Encoding**: oggi solo UTF-8 (UTF-16 ha `\0` → scambiato per binario).
-      Rispettare `files.encoding` / BOM
+- [x] **Encoding**: il lato worktree passa da `openTextDocument` (BOM,
+      `files.encoding`, come l'editor e come `repo.show` sul lato git) invece
+      di leggere sempre UTF-8 → niente righe accentate "modificate" nei file
+      latin1/windows-1252. Stage per chunk rifiutato (invece di corrompere
+      l'index) se il file non è UTF-8 e la patch ha byte non ASCII, o se tocca
+      la riga 1 di un file con BOM. UTF-16: la git extension non sniffa il
+      BOM senza `files.autoGuessEncoding` → resta "looks binary"
 - [ ] Test unitari della mappa di `scrollSync` (matematica pura, estraibile)
 
 ## 🔲 Fase 3 — Compare with branch / revision

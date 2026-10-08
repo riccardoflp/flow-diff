@@ -27,21 +27,22 @@ export class GitService {
   /**
    * Content of `uri` at the given side, or undefined when the file does not
    * exist there (untracked at a ref, deleted in the worktree, ...).
-   * Worktree reads prefer the open document so unsaved edits are diffed too.
+   * Worktree reads go through the text document: unsaved edits are diffed
+   * too, and the file is decoded like the editor does (BOM, `files.encoding`)
+   * — the same setting `repo.show` decodes the git side with.
    */
   async getContent(repo: Repository, uri: vscode.Uri, side: DiffSide): Promise<string | undefined> {
     if (side === 'worktree') {
-      const open = vscode.workspace.textDocuments.find(
-        (d) => d.uri.toString() === uri.toString()
-      );
-      if (open) {
-        return open.getText();
-      }
       try {
-        const bytes = await vscode.workspace.fs.readFile(uri);
-        return Buffer.from(bytes).toString('utf8');
+        return (await vscode.workspace.openTextDocument(uri)).getText();
       } catch {
-        return undefined;
+        // deleted, or refused as text (binary, too large): raw bytes, if any,
+        // still reach the binary guard
+        try {
+          return Buffer.from(await vscode.workspace.fs.readFile(uri)).toString('utf8');
+        } catch {
+          return undefined;
+        }
       }
     }
 
